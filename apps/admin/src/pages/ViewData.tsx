@@ -37,6 +37,11 @@ interface EditingPackage {
   benefits: string[]
 }
 
+// Build API base URL (matches logic in api.ts)
+let raw = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+if (!/^https?:\/\//.test(raw)) raw = `https://${raw}`
+const API_URL = raw.replace(/\/$/, '')
+
 export function ViewData() {
   const [activeTab, setActiveTab] = useState<'students' | 'cards' | 'packages' | 'admins'>('students')
   const [students, setStudents] = useState<Student[]>([])
@@ -81,7 +86,7 @@ export function ViewData() {
   }
 
   const loadStudents = async () => {
-    const response = await fetch('http://localhost:3001/api/admin/students', {
+    const response = await fetch(`${API_URL}/api/admin/students`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
       }
@@ -92,7 +97,7 @@ export function ViewData() {
   }
 
   const loadCards = async () => {
-    const response = await fetch('http://localhost:3001/api/admin/cards', {
+    const response = await fetch(`${API_URL}/api/admin/cards`, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
       }
@@ -116,7 +121,7 @@ export function ViewData() {
     if (!confirm('Are you sure you want to delete this student? This will also delete all their cards.')) return
     
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/students/${studentId}`, {
+      const response = await fetch(`${API_URL}/api/admin/students/${studentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
@@ -133,7 +138,7 @@ export function ViewData() {
     if (!confirm('Are you sure you want to delete this card?')) return
     
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/cards/${cardId}`, {
+      const response = await fetch(`${API_URL}/api/admin/cards/${cardId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
@@ -150,7 +155,7 @@ export function ViewData() {
     if (!confirm('Are you sure you want to delete this package? This will also delete all cards using this package.')) return
     
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/packages/${packageId}`, {
+      const response = await fetch(`${API_URL}/api/admin/packages/${packageId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
@@ -165,7 +170,7 @@ export function ViewData() {
 
   const handleToggleStudentStatus = async (studentId: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/students/${studentId}/status`, {
+      const response = await fetch(`${API_URL}/api/admin/students/${studentId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
@@ -182,7 +187,7 @@ export function ViewData() {
 
   const handleToggleAdminStatus = async (adminId: number, currentStatus: boolean) => {
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/admins/${adminId}/status`, {
+      const response = await fetch(`${API_URL}/api/admin/admins/${adminId}/status`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
@@ -212,7 +217,7 @@ export function ViewData() {
     if (!editingStudent) return
     
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/students/${editingStudent.id}`, {
+      const response = await fetch(`${API_URL}/api/admin/students/${editingStudent.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
@@ -249,7 +254,7 @@ export function ViewData() {
     if (!editingPackage) return
     
     try {
-      const response = await fetch(`http://localhost:3001/api/admin/packages/${editingPackage.id}`, {
+      const response = await fetch(`${API_URL}/api/admin/packages/${editingPackage.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,

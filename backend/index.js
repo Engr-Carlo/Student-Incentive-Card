@@ -686,6 +686,40 @@ app.get('/api/cards', async (req, res) => {
 
 // ============ DELETE ENDPOINTS (Super Admin Only) ============
 
+// ============ ADMIN LISTING ENDPOINTS (Super Admin Only) ============
+
+// List all students
+app.get('/api/admin/students', authenticateAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, student_id, email, first_name, last_name, program, year_level, is_active, created_at FROM students ORDER BY created_at DESC'
+    )
+    res.json(result.rows)
+  } catch (error) {
+    console.error('Error listing students:', error)
+    res.status(500).json({ error: 'Failed to list students' })
+  }
+})
+
+// List all cards with package and admin details
+app.get('/api/admin/cards', authenticateAdmin, requireSuperAdmin, async (req, res) => {
+  try {
+    const query = `
+      SELECT c.*, p.name AS package_name, p.tier, p.benefits, p.event_type, p.competition_level,
+             a.first_name || ' ' || a.last_name AS admin_name
+      FROM cards c
+      LEFT JOIN packages p ON c.package_id = p.id
+      LEFT JOIN admins a ON c.issued_by = a.id
+      ORDER BY c.issued_date DESC
+    `
+    const result = await pool.query(query)
+    res.json(result.rows)
+  } catch (error) {
+    console.error('Error listing cards:', error)
+    res.status(500).json({ error: 'Failed to list cards' })
+  }
+})
+
 // Delete student
 app.delete('/api/admin/students/:id', authenticateAdmin, requireSuperAdmin, async (req, res) => {
   try {
