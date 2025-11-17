@@ -3,6 +3,10 @@ import { LogIn, Mail, Lock, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
 export default function Login(){
+  // Build API base URL
+  let raw = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+  if (!/^https?:\/\//.test(raw)) raw = `https://${raw}`
+  const API_URL = raw.replace(/\/$/, '')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -16,7 +20,7 @@ export default function Login(){
 
     try {
       // TODO: Replace with actual API call
-      const response = await fetch('http://localhost:3001/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

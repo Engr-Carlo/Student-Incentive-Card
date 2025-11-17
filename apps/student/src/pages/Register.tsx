@@ -3,6 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { UserPlus, Mail, Lock, User, IdCard, BookOpen, CheckCircle, Send, Shield } from 'lucide-react'
 
 export default function Register(){
+  // Build API base URL
+  let raw = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+  if (!/^https?:\/\//.test(raw)) raw = `https://${raw}`
+  const API_URL = raw.replace(/\/$/, '')
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     studentId: '',
@@ -45,7 +49,7 @@ export default function Register(){
     setError('')
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/send-verification', {
+      const response = await fetch(`${API_URL}/api/auth/send-verification`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: formData.email })
@@ -75,7 +79,7 @@ export default function Register(){
     setError('')
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/verify-code', {
+      const response = await fetch(`${API_URL}/api/auth/verify-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -120,7 +124,7 @@ export default function Register(){
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/auth/register', {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

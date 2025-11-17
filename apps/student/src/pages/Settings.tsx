@@ -13,6 +13,10 @@ interface ProfileData {
 }
 
 export default function Settings() {
+  // Build API base URL
+  let raw = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+  if (!/^https?:\/\//.test(raw)) raw = `https://${raw}`
+  const API_URL = raw.replace(/\/$/, '')
   const [activeTab, setActiveTab] = useState<'profile' | 'password' | 'preferences'>('profile')
   const [profile, setProfile] = useState<ProfileData>({
     student_id: localStorage.getItem('student_id') || '',
@@ -45,9 +49,9 @@ export default function Settings() {
 
   const loadProfile = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/students/${localStorage.getItem('student_id')}`, {
+      const response = await fetch(`${API_URL}/api/students/${localStorage.getItem('student_id')}`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
         }
       })
       if (response.ok) {
@@ -71,10 +75,10 @@ export default function Settings() {
     setError('')
     
     try {
-      const response = await fetch(`http://localhost:3001/api/students/${profile.student_id}`, {
+      const response = await fetch(`${API_URL}/api/students/${profile.student_id}`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -114,10 +118,10 @@ export default function Settings() {
     }
 
     try {
-      const response = await fetch('http://localhost:3001/api/students/change-password', {
+      const response = await fetch(`${API_URL}/api/students/change-password`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
