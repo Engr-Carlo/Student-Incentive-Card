@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+let API_URL = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+// Ensure protocol present and remove trailing slash for consistency
+if (!/^https?:\/\//.test(API_URL)) {
+  API_URL = `https://${API_URL}`
+}
+API_URL = API_URL.replace(/\/$/, '')
 
 // Admin Interface
 export interface Admin {

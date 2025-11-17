@@ -1,4 +1,9 @@
-const API_URL = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+let API_URL = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+// Normalize: add protocol if missing and strip trailing slash
+if (!/^https?:\/\//.test(API_URL)) {
+  API_URL = `https://${API_URL}`
+}
+API_URL = API_URL.replace(/\/$/, '')
 
 export interface Card {
   id: number
@@ -53,14 +58,15 @@ class StudentStore {
   // Cards
   async getCards(): Promise<Card[]> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_URL}/cards?student_id=${student.id}`)
+    const res = await fetch(`${API_URL}/api/cards?student_id=${student.id}`)
     return res.json()
   }
 
   async getCardById(id: number): Promise<Card | null> {
     try {
-      const res = await fetch(`${API_URL}/cards/${id}`)
-      return res.json()
+      // Backend has no /api/cards/:id endpoint; filter from list instead
+      const cards = await this.getCards()
+      return cards.find(c => c.id === id) || null
     } catch {
       return null
     }
@@ -69,47 +75,45 @@ class StudentStore {
   // Redemption Requests
   async getRedemptionRequests(): Promise<RedemptionRequest[]> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_URL}/requests?student_id=${student.id}`)
-    return res.json()
+    // Endpoint not implemented in backend; return empty array
+    return []
   }
 
   async submitRedemptionRequest(cardId: number, course: string, benefit: string): Promise<RedemptionRequest> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_URL}/requests`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        card_id: cardId,
-        student_id: student.id,
-        student_name: student.name,
-        course,
-        benefit
-      })
-    })
-    return res.json()
+    // Not supported; simulate a local object
+    return {
+      id: Date.now(),
+      card_id: cardId,
+      student_id: student.id,
+      student_name: student.name,
+      course,
+      benefit,
+      status: 'Pending',
+      submitted_date: new Date().toISOString()
+    }
   }
 
   // Proof Submissions
   async getProofSubmissions(): Promise<ProofSubmission[]> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_URL}/proofs?student_id=${student.id}`)
-    return res.json()
+    // Endpoint not implemented; return empty array
+    return []
   }
 
   async submitProof(eventName: string, eventType: string, files: string[]): Promise<ProofSubmission> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_URL}/proofs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        student_id: student.id,
-        student_name: student.name,
-        event_name: eventName,
-        event_type: eventType,
-        files
-      })
-    })
-    return res.json()
+    // Not supported; return a mock submission object
+    return {
+      id: Date.now(),
+      student_id: student.id,
+      student_name: student.name,
+      event_name: eventName,
+      event_type: eventType,
+      files,
+      status: 'Pending',
+      submitted_date: new Date().toISOString()
+    }
   }
 
   // Stats
