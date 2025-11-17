@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
 
 // Admin Interface
 export interface Admin {
@@ -67,7 +67,7 @@ class AdminStore {
   // ========== AUTHENTICATION ==========
   
   async login(email: string, password: string): Promise<{ token: string; admin: Admin }> {
-    const res = await fetch(`${API_BASE_URL}/admin/auth/login`, {
+    const res = await fetch(`${API_URL}/admin/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -106,7 +106,7 @@ class AdminStore {
   // ========== ADMIN MANAGEMENT (Super Admin Only) ==========
   
   async getAllAdmins(): Promise<Admin[]> {
-    const res = await fetch(`${API_BASE_URL}/admin/admins`, {
+    const res = await fetch(`${API_URL}/admin/admins`, {
       headers: getHeaders()
     })
     
@@ -115,7 +115,7 @@ class AdminStore {
   }
 
   async createAdmin(email: string, password: string, first_name: string, last_name: string, role: 'super_admin' | 'admin' = 'admin'): Promise<Admin> {
-    const res = await fetch(`${API_BASE_URL}/admin/auth/register`, {
+    const res = await fetch(`${API_URL}/admin/auth/register`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ email, password, first_name, last_name, role })
@@ -131,7 +131,7 @@ class AdminStore {
   }
 
   async grantPackageAccess(admin_id: number, package_id: number): Promise<void> {
-    const res = await fetch(`${API_BASE_URL}/admin/package-access`, {
+    const res = await fetch(`${API_URL}/admin/package-access`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ admin_id, package_id })
@@ -144,7 +144,7 @@ class AdminStore {
   }
 
   async revokePackageAccess(admin_id: number, package_id: number): Promise<void> {
-    const res = await fetch(`${API_BASE_URL}/admin/package-access/${admin_id}/${package_id}`, {
+    const res = await fetch(`${API_URL}/admin/package-access/${admin_id}/${package_id}`, {
       method: 'DELETE',
       headers: getHeaders()
     })
@@ -153,7 +153,7 @@ class AdminStore {
   }
 
   async getAdminPackageAccess(admin_id: number): Promise<Package[]> {
-    const res = await fetch(`${API_BASE_URL}/admin/package-access/${admin_id}`, {
+    const res = await fetch(`${API_URL}/admin/package-access/${admin_id}`, {
       headers: getHeaders()
     })
     
@@ -162,7 +162,7 @@ class AdminStore {
   }
 
   async deleteAdmin(admin_id: number): Promise<void> {
-    const res = await fetch(`${API_BASE_URL}/admin/admins/${admin_id}`, {
+    const res = await fetch(`${API_URL}/admin/admins/${admin_id}`, {
       method: 'DELETE',
       headers: getHeaders()
     })
@@ -176,7 +176,7 @@ class AdminStore {
   // ========== PACKAGES ==========
   
   async getPackages(): Promise<Package[]> {
-    const res = await fetch(`${API_BASE_URL}/packages`, {
+    const res = await fetch(`${API_URL}/packages`, {
       headers: getHeaders()
     })
     
@@ -185,7 +185,7 @@ class AdminStore {
   }
 
   async createPackage(name: string, tier: 'Bronze' | 'Silver' | 'Gold', event_type: string, competition_level: string, benefits: string[]): Promise<Package> {
-    const res = await fetch(`${API_BASE_URL}/packages`, {
+    const res = await fetch(`${API_URL}/packages`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ name, tier, event_type, competition_level, benefits })
@@ -202,7 +202,7 @@ class AdminStore {
   // ========== CARDS ==========
   
   async getCards(): Promise<Card[]> {
-    const res = await fetch(`${API_BASE_URL}/cards`, {
+    const res = await fetch(`${API_URL}/cards`, {
       headers: getHeaders()
     })
     
@@ -211,7 +211,7 @@ class AdminStore {
   }
 
   async issueCard(package_id: number, student_id: string): Promise<Card> {
-    const res = await fetch(`${API_BASE_URL}/cards/issue`, {
+    const res = await fetch(`${API_URL}/cards/issue`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ package_id, student_id })
@@ -228,7 +228,7 @@ class AdminStore {
   // ========== STATS ==========
   
   async getStats(): Promise<{ totalCards: number; uniqueStudents: number; redeemed: number; pending: number }> {
-    const res = await fetch(`${API_BASE_URL}/stats`, {
+    const res = await fetch(`${API_URL}/stats`, {
       headers: getHeaders()
     })
     const data = await res.json()

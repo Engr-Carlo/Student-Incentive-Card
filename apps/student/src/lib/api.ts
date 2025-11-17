@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:3001/api'
+const API_URL = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
 
 export interface Card {
   id: number
@@ -53,13 +53,13 @@ class StudentStore {
   // Cards
   async getCards(): Promise<Card[]> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_BASE_URL}/cards?student_id=${student.id}`)
+    const res = await fetch(`${API_URL}/cards?student_id=${student.id}`)
     return res.json()
   }
 
   async getCardById(id: number): Promise<Card | null> {
     try {
-      const res = await fetch(`${API_BASE_URL}/cards/${id}`)
+      const res = await fetch(`${API_URL}/cards/${id}`)
       return res.json()
     } catch {
       return null
@@ -69,13 +69,13 @@ class StudentStore {
   // Redemption Requests
   async getRedemptionRequests(): Promise<RedemptionRequest[]> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_BASE_URL}/requests?student_id=${student.id}`)
+    const res = await fetch(`${API_URL}/requests?student_id=${student.id}`)
     return res.json()
   }
 
   async submitRedemptionRequest(cardId: number, course: string, benefit: string): Promise<RedemptionRequest> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_BASE_URL}/requests`, {
+    const res = await fetch(`${API_URL}/requests`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -92,13 +92,13 @@ class StudentStore {
   // Proof Submissions
   async getProofSubmissions(): Promise<ProofSubmission[]> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_BASE_URL}/proofs?student_id=${student.id}`)
+    const res = await fetch(`${API_URL}/proofs?student_id=${student.id}`)
     return res.json()
   }
 
   async submitProof(eventName: string, eventType: string, files: string[]): Promise<ProofSubmission> {
     const student = getAuthenticatedStudent()
-    const res = await fetch(`${API_BASE_URL}/proofs`, {
+    const res = await fetch(`${API_URL}/proofs`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
