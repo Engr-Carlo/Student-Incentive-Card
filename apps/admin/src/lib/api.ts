@@ -261,3 +261,17 @@ class AdminStore {
 
 export const adminStore = new AdminStore()
 
+export const adminApi = {
+  login: async (email: string, password: string) => {
+    const response = await fetch(`${API_URL}/api/admin/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
+    if (!response.ok) throw new Error('Login failed')
+    return response.json()
+  },
+  
+  // ...rest of the existing code...
+}
+
