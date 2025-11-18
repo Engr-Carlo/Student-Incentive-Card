@@ -153,28 +153,28 @@ export default function Register(){
   }
 
   return (
-    <section className="max-w-3xl mx-auto">
-      <div className="glass rounded-2xl p-8 shadow-2xl">
-        <div className="text-center mb-8">
+    <section className="max-w-4xl mx-auto px-4 py-4 sm:px-6 sm:py-6 lg:px-8">
+      <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-xl sm:shadow-2xl">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center mb-3">
-            <div className="p-3 rounded-full" style={{backgroundColor: '#003f88'}}>
-              <UserPlus size={40} className="text-white" />
+            <div className="p-2.5 sm:p-3 rounded-full" style={{backgroundColor: '#003f88'}}>
+              <UserPlus size={32} className="text-white sm:w-10 sm:h-10" />
             </div>
           </div>
-          <h2 className="text-3xl font-bold text-gray-800">Create Student Account</h2>
-          <p className="text-gray-600 mt-2">Register to access your Incentive Card portal</p>
+          <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">Create Student Account</h2>
+          <p className="text-sm sm:text-base text-gray-600 mt-2">Register to access your Incentive Card portal</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <IdCard size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <IdCard size={14} className="sm:w-4 sm:h-4" />
                 Student ID
               </label>
               <input 
                 name="studentId"
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200" 
+                className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200" 
                 style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                 placeholder="e.g., 2021-12345" 
                 value={formData.studentId}
@@ -184,16 +184,16 @@ export default function Register(){
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <Mail size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <Mail size={14} className="sm:w-4 sm:h-4" />
                 Email Address
               </label>
               <div className="space-y-2">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <input 
                     type="email"
                     name="email"
-                    className="flex-1 border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200" 
+                    className="flex-1 border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200" 
                     style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                     placeholder="your.email@university.edu" 
                     value={formData.email}
@@ -206,7 +206,7 @@ export default function Register(){
                       type="button"
                       onClick={sendVerificationCode}
                       disabled={sendingCode || !formData.email}
-                      className="px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center gap-2"
+                      className="w-full sm:w-auto px-4 py-2.5 sm:py-3 text-sm sm:text-base bg-blue-600 text-white rounded-lg sm:rounded-xl font-semibold hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
                     >
                       {sendingCode ? (
                         <>
@@ -222,28 +222,28 @@ export default function Register(){
                     </button>
                   )}
                   {emailVerified && (
-                    <div className="px-4 py-3 bg-green-100 text-green-800 rounded-xl font-semibold flex items-center gap-2">
-                      <CheckCircle size={16} />
+                    <div className="w-full sm:w-auto px-4 py-2.5 sm:py-3 bg-green-100 text-green-800 rounded-lg sm:rounded-xl font-semibold text-sm sm:text-base flex items-center justify-center gap-2">
+                      <CheckCircle size={14} className="sm:w-4 sm:h-4" />
                       Verified
                     </div>
                   )}
                 </div>
                 
                 {codeSent && !emailVerified && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-3">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg sm:rounded-xl p-3 sm:p-4 space-y-3">
                     <div className="flex items-start gap-2">
-                      <Shield size={16} className="text-blue-600 mt-0.5" />
-                      <p className="text-sm text-blue-800">
+                      <Shield size={14} className="text-blue-600 mt-0.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <p className="text-xs sm:text-sm text-blue-800">
                         We sent a 6-digit code to <strong>{formData.email}</strong>. Please check your inbox.
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <input
                         type="text"
                         placeholder="Enter 6-digit code"
                         value={verificationCode}
                         onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        className="flex-1 border-2 border-blue-200 rounded-lg p-2 text-center text-lg font-mono tracking-wider focus:ring-2 focus:border-transparent"
+                        className="flex-1 border-2 border-blue-200 rounded-lg p-2 sm:p-2.5 text-center text-base sm:text-lg font-mono tracking-wider focus:ring-2 focus:border-transparent"
                         style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                         maxLength={6}
                       />
@@ -251,7 +251,7 @@ export default function Register(){
                         type="button"
                         onClick={verifyCode}
                         disabled={verifyingCode || verificationCode.length !== 6}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
+                        className="w-full sm:w-auto px-4 py-2 sm:py-2.5 text-sm sm:text-base bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-all duration-200"
                       >
                         {verifyingCode ? (
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
@@ -392,17 +392,17 @@ export default function Register(){
 
           <button 
             type="submit"
-            className="w-full text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-200 flex items-center justify-center gap-2"
+            className="w-full text-white py-3 sm:py-4 px-4 sm:px-6 rounded-lg sm:rounded-xl font-semibold text-base sm:text-lg transition-all duration-200 flex items-center justify-center gap-2"
             style={{backgroundColor: '#003f88'}}
             onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#002a5c')}
             onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#003f88')}
           >
-            <UserPlus size={20} />
+            <UserPlus size={18} className="sm:w-5 sm:h-5" />
             Create Account
           </button>
 
           {success && (
-            <div className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-xl">
+            <div className="bg-green-50 border border-green-300 text-green-800 p-3 sm:p-4 rounded-lg sm:rounded-xl">
               <div className="flex items-center gap-3">
                 <CheckCircle size={24} className="text-green-600" />
                 <div>
@@ -414,8 +414,8 @@ export default function Register(){
           )}
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
+        <div className="mt-4 sm:mt-6 text-center">
+          <p className="text-xs sm:text-sm text-gray-600">
             Already have an account?{' '}
             <a href="/login" className="font-semibold" style={{color: '#003f88'}}>
               Sign in here
