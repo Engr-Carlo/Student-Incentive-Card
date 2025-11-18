@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { adminStore, Card, Package, Admin } from '../lib/api'
-import { Trash2, Edit2, Check, X } from 'lucide-react'
+import { Trash2, Edit2, Check, X, Filter, Search } from 'lucide-react'
 
 interface Student {
   id: number
@@ -54,6 +54,18 @@ export function ViewData() {
   
   const [editingStudent, setEditingStudent] = useState<EditingStudent | null>(null)
   const [editingPackage, setEditingPackage] = useState<EditingPackage | null>(null)
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [tierFilter, setTierFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>('all')
+  const [programFilter, setProgramFilter] = useState<string>('all')
+  const [yearLevelFilter, setYearLevelFilter] = useState<string>('all')
+  const [issuedByFilter, setIssuedByFilter] = useState<string>('all')
+  const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -284,6 +296,80 @@ export function ViewData() {
     })
   }
 
+  // Filter functions
+  const getFilteredStudents = () => {
+    return students.filter(student => {
+      const matchesSearch = searchTerm === '' || 
+        student.student_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        `${student.first_name} ${student.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.email.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesProgram = programFilter === 'all' || student.program === programFilter
+      const matchesYear = yearLevelFilter === 'all' || student.year_level === yearLevelFilter
+      
+      return matchesSearch && matchesProgram && matchesYear
+    })
+  }
+
+  const getFilteredCards = () => {
+    return cards.filter(card => {
+      const matchesSearch = searchTerm === '' || 
+        card.student_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        card.package_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesTier = tierFilter === 'all' || card.tier === tierFilter
+      const matchesStatus = statusFilter === 'all' || card.status === statusFilter
+      const matchesEventType = eventTypeFilter === 'all' || card.event_type === eventTypeFilter
+      const matchesIssuedBy = issuedByFilter === 'all' || card.admin_name === issuedByFilter
+      
+      const matchesDateFrom = !dateFrom || new Date(card.issued_date) >= new Date(dateFrom)
+      const matchesDateTo = !dateTo || new Date(card.issued_date) <= new Date(dateTo)
+      
+      return matchesSearch && matchesTier && matchesStatus && matchesEventType && matchesIssuedBy && matchesDateFrom && matchesDateTo
+    })
+  }
+
+  const getFilteredPackages = () => {
+    return packages.filter(pkg => {
+      const matchesSearch = searchTerm === '' || 
+        pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        pkg.event_type.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesTier = tierFilter === 'all' || pkg.tier === tierFilter
+      const matchesEventType = eventTypeFilter === 'all' || pkg.event_type === eventTypeFilter
+      
+      return matchesSearch && matchesTier && matchesEventType
+    })
+  }
+
+  const getFilteredAdmins = () => {
+    return admins.filter(admin => {
+      const matchesSearch = searchTerm === '' || 
+        `${admin.first_name} ${admin.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        admin.email.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      return matchesSearch
+    })
+  }
+
+  // Get unique values for filters
+  const uniquePrograms = Array.from(new Set(students.map(s => s.program))).sort()
+  const uniqueYearLevels = Array.from(new Set(students.map(s => s.year_level))).sort()
+  const uniqueEventTypes = Array.from(new Set([...cards.map(c => c.event_type), ...packages.map(p => p.event_type)])).filter(Boolean).sort()
+  const uniqueIssuers = Array.from(new Set(cards.map(c => c.admin_name).filter(Boolean))).sort()
+
+  const resetFilters = () => {
+    setSearchTerm('')
+    setDateFrom('')
+    setDateTo('')
+    setTierFilter('all')
+    setStatusFilter('all')
+    setEventTypeFilter('all')
+    setProgramFilter('all')
+    setYearLevelFilter('all')
+    setIssuedByFilter('all')
+  }
+
   const tabs = [
     { id: 'students' as const, label: 'Students', icon: '👥' },
     { id: 'cards' as const, label: 'Distributed Cards', icon: '🎴' },
@@ -324,6 +410,178 @@ export function ViewData() {
         </div>
       )}
 
+      {/* Filters Section */}
+      <div className="mb-6 bg-white rounded-xl shadow-lg overflow-hidden">
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className="w-full px-6 py-4 flex items-center justify-between text-left font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <Filter size={20} className="text-indigo-600" />
+            <span>Filters</span>
+            {(searchTerm || dateFrom || dateTo || tierFilter !== 'all' || statusFilter !== 'all' || eventTypeFilter !== 'all' || programFilter !== 'all' || yearLevelFilter !== 'all' || issuedByFilter !== 'all') && (
+              <span className="ml-2 px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full">Active</span>
+            )}
+          </div>
+          <span className="text-gray-400">{showFilters ? '▼' : '▶'}</span>
+        </button>
+
+        {showFilters && (
+          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Search */}
+              <div className="col-span-full">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Search size={16} className="inline mr-1" />
+                  Search
+                </label>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search by name, ID, email..."
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Date Filters (Cards only) */}
+              {activeTab === 'cards' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                    <input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => setDateFrom(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                    <input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => setDateTo(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Tier Filter (Cards & Packages) */}
+              {(activeTab === 'cards' || activeTab === 'packages') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tier</label>
+                  <select
+                    value={tierFilter}
+                    onChange={(e) => setTierFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="all">All Tiers</option>
+                    <option value="Gold">Gold</option>
+                    <option value="Silver">Silver</option>
+                    <option value="Bronze">Bronze</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Status Filter (Cards only) */}
+              {activeTab === 'cards' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="Unused">Unused</option>
+                    <option value="Redeemed">Redeemed</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Event Type Filter (Cards & Packages) */}
+              {(activeTab === 'cards' || activeTab === 'packages') && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
+                  <select
+                    value={eventTypeFilter}
+                    onChange={(e) => setEventTypeFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="all">All Event Types</option>
+                    {uniqueEventTypes.map(et => (
+                      <option key={et} value={et}>{et}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Issued By Filter (Cards only) */}
+              {activeTab === 'cards' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Issued By</label>
+                  <select
+                    value={issuedByFilter}
+                    onChange={(e) => setIssuedByFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="all">All Admins</option>
+                    {uniqueIssuers.map(issuer => (
+                      <option key={issuer} value={issuer}>{issuer}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Program Filter (Students only) */}
+              {activeTab === 'students' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Program</label>
+                  <select
+                    value={programFilter}
+                    onChange={(e) => setProgramFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="all">All Programs</option>
+                    {uniquePrograms.map(prog => (
+                      <option key={prog} value={prog}>{prog}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Year Level Filter (Students only) */}
+              {activeTab === 'students' && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Year Level</label>
+                  <select
+                    value={yearLevelFilter}
+                    onChange={(e) => setYearLevelFilter(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="all">All Year Levels</option>
+                    {uniqueYearLevels.map(year => (
+                      <option key={year} value={year}>{year}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                Reset Filters
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {loading ? (
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-indigo-600 border-t-transparent"></div>
@@ -333,22 +591,22 @@ export function ViewData() {
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           {/* Students Table */}
           {activeTab === 'students' && (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto" style={{maxHeight: '600px'}}>
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Program</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year Level</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registered</th>
-                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Student ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Program</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Year Level</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Registered</th>
+                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {students.map((student) => (
+                  {getFilteredStudents().map((student) => (
                     <tr key={student.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{student.student_id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -473,30 +731,30 @@ export function ViewData() {
                   ))}
                 </tbody>
               </table>
-              {students.length === 0 && (
-                <div className="text-center py-12 text-gray-500">No students registered yet</div>
+              {getFilteredStudents().length === 0 && (
+                <div className="text-center py-12 text-gray-500">No students match the filters</div>
               )}
             </div>
           )}
 
           {/* Cards Table */}
           {activeTab === 'cards' && (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto" style={{maxHeight: '600px'}}>
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Card ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tier</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issued Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Issued By</th>
-                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Card ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Student ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Package</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Tier</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Issued Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Issued By</th>
+                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {cards.map((card) => (
+                  {getFilteredCards().map((card) => (
                     <tr key={card.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{card.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{card.student_id}</td>
@@ -534,30 +792,30 @@ export function ViewData() {
                   ))}
                 </tbody>
               </table>
-              {cards.length === 0 && (
-                <div className="text-center py-12 text-gray-500">No cards distributed yet</div>
+              {getFilteredCards().length === 0 && (
+                <div className="text-center py-12 text-gray-500">No cards match the filters</div>
               )}
             </div>
           )}
 
           {/* Packages Table */}
           {activeTab === 'packages' && (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto" style={{maxHeight: '600px'}}>
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Package ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tier</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Benefits</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Package ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Tier</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Event Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Level</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Benefits</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Created</th>
+                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {packages.map((pkg) => (
+                  {getFilteredPackages().map((pkg) => (
                     <tr key={pkg.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{pkg.id}</td>
                       <td className="px-6 py-4 text-sm text-gray-900">
@@ -704,29 +962,29 @@ export function ViewData() {
                   ))}
                 </tbody>
               </table>
-              {packages.length === 0 && (
-                <div className="text-center py-12 text-gray-500">No packages created yet</div>
+              {getFilteredPackages().length === 0 && (
+                <div className="text-center py-12 text-gray-500">No packages match the filters</div>
               )}
             </div>
           )}
 
           {/* Admins Table */}
           {activeTab === 'admins' && (
-            <div className="overflow-x-auto">
+            <div className="overflow-auto" style={{maxHeight: '600px'}}>
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admin ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>}
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Admin ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Email</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Created</th>
+                    {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {admins.map((admin) => (
+                  {getFilteredAdmins().map((admin) => (
                     <tr key={admin.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{admin.id}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{admin.first_name} {admin.last_name}</td>
@@ -776,8 +1034,8 @@ export function ViewData() {
                   ))}
                 </tbody>
               </table>
-              {admins.length === 0 && (
-                <div className="text-center py-12 text-gray-500">No administrators found</div>
+              {getFilteredAdmins().length === 0 && (
+                <div className="text-center py-12 text-gray-500">No admins match the filters</div>
               )}
             </div>
           )}
