@@ -323,6 +323,93 @@ app.post('/api/auth/login', async (req, res) => {
   }
 })
 
+// Student forgot password
+app.post('/api/students/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body
+
+    // Find student by email
+    const result = await pool.query(
+      'SELECT * FROM students WHERE email = $1',
+      [email]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No account found with this email address' })
+    }
+
+    const student = result.rows[0]
+
+    if (!isEmailConfigured) {
+      return res.status(503).json({ error: 'Email service not configured. Please contact administrator.' })
+    }
+
+    // Send password via email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Student Incentive Card - Password Recovery',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #003f88; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .password-box { background-color: white; border: 2px solid #003f88; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+            .password { font-size: 24px; font-weight: bold; color: #003f88; letter-spacing: 2px; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Password Recovery</h1>
+            </div>
+            <div class="content">
+              <p>Hello ${student.first_name} ${student.last_name},</p>
+              <p>You requested to recover your password for the Student Incentive Card System.</p>
+              
+              <div class="password-box">
+                <p style="margin: 0 0 10px 0; color: #666;">Your Password:</p>
+                <div class="password">${student.password}</div>
+              </div>
+
+              <div class="warning">
+                <strong>⚠️ Security Notice:</strong>
+                <p style="margin: 5px 0 0 0;">For security reasons, we recommend changing your password after logging in. Keep this password confidential and do not share it with anyone.</p>
+              </div>
+
+              <p><strong>Your Account Details:</strong></p>
+              <ul>
+                <li>Email: ${student.email}</li>
+                <li>Student ID: ${student.student_id}</li>
+              </ul>
+
+              <p>If you did not request this password recovery, please contact the administrator immediately.</p>
+            </div>
+            <div class="footer">
+              <p>Student Incentive Card System</p>
+              <p>This is an automated email. Please do not reply.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    }
+
+    await transporter.sendMail(mailOptions)
+
+    res.json({ message: 'Password has been sent to your email address' })
+  } catch (error) {
+    console.error('Forgot password error:', error)
+    res.status(500).json({ error: 'Failed to send password recovery email' })
+  }
+})
+
 // ============ ADMIN AUTHENTICATION ENDPOINTS ============
 
 // Admin login
@@ -372,6 +459,98 @@ app.post('/api/admin/auth/login', async (req, res) => {
   } catch (error) {
     console.error('Admin login error:', error)
     res.status(500).json({ error: 'Login failed' })
+  }
+})
+
+// Admin forgot password
+app.post('/api/admins/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body
+
+    // Find admin by email
+    const result = await pool.query(
+      'SELECT * FROM admins WHERE email = $1 AND is_active = true',
+      [email]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No admin account found with this email address' })
+    }
+
+    const admin = result.rows[0]
+
+    if (!isEmailConfigured) {
+      return res.status(503).json({ error: 'Email service not configured. Please contact administrator.' })
+    }
+
+    // Decrypt password from password_hash (since we're storing plain text passwords)
+    // Note: In production, you should implement proper password reset with temporary tokens
+    const password = admin.password_hash
+
+    // Send password via email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Admin Portal - Password Recovery',
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { background-color: #4f46e5; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+            .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+            .password-box { background-color: white; border: 2px solid #4f46e5; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+            .password { font-size: 24px; font-weight: bold; color: #4f46e5; letter-spacing: 2px; }
+            .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>🔐 Password Recovery</h1>
+            </div>
+            <div class="content">
+              <p>Hello ${admin.first_name} ${admin.last_name},</p>
+              <p>You requested to recover your password for the Admin Portal.</p>
+              
+              <div class="password-box">
+                <p style="margin: 0 0 10px 0; color: #666;">Your Password:</p>
+                <div class="password">${password}</div>
+              </div>
+
+              <div class="warning">
+                <strong>⚠️ Security Notice:</strong>
+                <p style="margin: 5px 0 0 0;">This password provides admin access to the system. Keep it confidential and do not share it with anyone. If you did not request this recovery, contact the super admin immediately.</p>
+              </div>
+
+              <p><strong>Your Admin Account Details:</strong></p>
+              <ul>
+                <li>Email: ${admin.email}</li>
+                <li>Role: ${admin.role}</li>
+                <li>Name: ${admin.first_name} ${admin.last_name}</li>
+              </ul>
+
+              <p>If you did not request this password recovery, please contact the super administrator immediately.</p>
+            </div>
+            <div class="footer">
+              <p>Student Incentive Card System - Admin Portal</p>
+              <p>This is an automated email. Please do not reply.</p>
+            </div>
+          </div>
+        </body>
+        </html>
+      `
+    }
+
+    await transporter.sendMail(mailOptions)
+
+    res.json({ message: 'Password has been sent to your email address' })
+  } catch (error) {
+    console.error('Admin forgot password error:', error)
+    res.status(500).json({ error: 'Failed to send password recovery email' })
   }
 })
 
