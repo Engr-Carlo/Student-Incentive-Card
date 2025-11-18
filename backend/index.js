@@ -88,7 +88,18 @@ pool.query('SELECT NOW()', (err, res) => {
 })
 
 // Middleware
-app.use(cors())
+const corsOptions = {
+  origin: [
+    'https://incentive-card-student.vercel.app',
+    'https://incentive-card-admin.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+}
+
+app.use(cors(corsOptions))
 app.use(express.json())
 
 // Authentication middleware for students
