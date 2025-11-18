@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Award, CheckCircle, XCircle, Eye, Sparkles, Gift, Calendar, Star, X } from 'lucide-react'
+import { Award, CheckCircle, XCircle, Eye, Sparkles, Gift, Calendar, Star, X, QrCode, Download } from 'lucide-react'
 import { studentStore, type Card } from '../lib/api'
+import QRCodeLib from 'qrcode'
 
 type Tier = 'Gold' | 'Silver' | 'Bronze'
 
@@ -14,7 +15,8 @@ export default function MyCards(){
   const [filter, setFilter] = useState<'all'|'unused'|'redeemed'>('all')
   const [selectedCard, setSelectedCard] = useState<Card | null>(null)
   const [showViewModal, setShowViewModal] = useState(false)
-  const [redeeming, setRedeeming] = useState(false)
+  const [showRedeemQR, setShowRedeemQR] = useState(false)
+  const [qrDataURL, setQrDataURL] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
 
@@ -36,40 +38,33 @@ export default function MyCards(){
     setShowViewModal(true)
   }
 
-  const handleRedeemCard = async (card: Card) => {
-    if (!confirm('Are you sure you want to redeem this card? This action cannot be undone.')) {
-      return
-    }
-
-    setRedeeming(true)
-    setError('')
-    setMessage('')
-
+  const handleGenerateRedeemQR = async (card: Card) => {
     try {
-      const response = await fetch(`${API_URL}/api/cards/${card.id}/redeem`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json'
+      // Generate QR code with card ID
+      const qrData = await QRCodeLib.toDataURL(`CARD_${card.id}`, {
+        width: 400,
+        margin: 2,
+        color: {
+          dark: '#003f88',
+          light: '#FFFFFF'
         }
       })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Failed to redeem card')
-      }
-
-      setMessage('Card redeemed successfully!')
-      setTimeout(() => setMessage(''), 3000)
-      
-      // Reload cards to reflect the change
-      loadCards()
-    } catch (err: any) {
-      setError(err.message)
-      setTimeout(() => setError(''), 5000)
-    } finally {
-      setRedeeming(false)
+      setQrDataURL(qrData)
+      setSelectedCard(card)
+      setShowRedeemQR(true)
+    } catch (error) {
+      console.error('Error generating QR code:', error)
+      setError('Failed to generate QR code')
+      setTimeout(() => setError(''), 3000)
     }
+  }
+
+  const downloadQR = () => {
+    if (!selectedCard) return
+    const link = document.createElement('a')
+    link.href = qrDataURL
+    link.download = `redeem-card-${selectedCard.id}.png`
+    link.click()
   }
 
   const filtered = cards.filter(c => filter === 'all' || c.status.toLowerCase() === filter)
@@ -239,12 +234,11 @@ export default function MyCards(){
                 </button>
                 {card.status === 'Unused' && (
                   <button 
-                    onClick={() => handleRedeemCard(card)}
-                    disabled={redeeming}
-                    className="flex-1 bg-green-600 text-white text-sm py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-1 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    onClick={() => handleGenerateRedeemQR(card)}
+                    className="flex-1 bg-green-600 text-white text-sm py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-1"
                   >
-                    <Sparkles size={16} />
-                    {redeeming ? 'Redeeming...' : 'Redeem'}
+                    <QrCode size={16} />
+                    Redeem
                   </button>
                 )}
               </div>
@@ -340,15 +334,80 @@ export default function MyCards(){
                 <button
                   onClick={() => {
                     setShowViewModal(false)
-                    handleRedeemCard(selectedCard)
+                    handleGenerateRedeemQR(selectedCard)
                   }}
-                  disabled={redeeming}
-                  className="w-full bg-green-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="w-full bg-green-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  <Sparkles size={20} />
-                  {redeeming ? 'Redeeming...' : 'Redeem This Card'}
+                  <QrCode size={20} />
+                  Generate Redeem QR Code
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Redeem QR Code Modal */}
+      {showRedeemQR && selectedCard && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowRedeemQR(false)}>
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-800">Redeem Card</h3>
+              <button 
+                onClick={() => setShowRedeemQR(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            <div className="text-center space-y-4">
+              <div className={`inline-flex ${getTierClass(selectedCard.tier)} px-6 py-3 rounded-full text-lg font-bold shadow-xl items-center gap-2`}>
+                <Star size={20} className="fill-current" />
+                {selectedCard.tier} Tier
+              </div>
+
+              <h4 className="text-lg font-bold text-gray-800">{selectedCard.package_name}</h4>
+
+              <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 border-2 border-green-200">
+                <p className="text-sm text-gray-700 mb-4 font-medium">
+                  Show this QR code to an admin to redeem your card
+                </p>
+                
+                <div className="bg-white rounded-xl p-4 shadow-inner">
+                  <img src={qrDataURL} alt="Redeem QR Code" className="w-full max-w-[300px] mx-auto" />
+                </div>
+
+                <div className="mt-4 p-3 bg-white/80 rounded-lg">
+                  <p className="text-xs text-gray-600">Card ID</p>
+                  <p className="text-lg font-bold text-gray-800">#{selectedCard.id}</p>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={downloadQR}
+                  className="flex-1 py-3 px-4 rounded-xl font-semibold text-white transition-all flex items-center justify-center gap-2"
+                  style={{backgroundColor: '#003f88'}}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#002a5c')}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#003f88')}
+                >
+                  <Download size={20} />
+                  Download QR
+                </button>
+                <button
+                  onClick={() => setShowRedeemQR(false)}
+                  className="flex-1 py-3 px-4 bg-gray-200 rounded-xl font-semibold text-gray-800 hover:bg-gray-300 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-left">
+                <p className="text-xs text-amber-800">
+                  <strong>Note:</strong> This card can only be redeemed once. Make sure to show this QR code to an authorized admin.
+                </p>
+              </div>
             </div>
           </div>
         </div>

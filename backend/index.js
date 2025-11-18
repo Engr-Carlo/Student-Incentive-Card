@@ -734,6 +734,47 @@ app.post('/api/cards/:cardId/redeem', authenticateStudent, async (req, res) => {
   }
 })
 
+// Redeem a card (Admin - via QR scan)
+app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) => {
+  try {
+    const { cardId } = req.params
+
+    // Check if card exists
+    const cardCheck = await pool.query(
+      'SELECT * FROM cards WHERE id = $1',
+      [cardId]
+    )
+
+    if (cardCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Card not found' })
+    }
+
+    const card = cardCheck.rows[0]
+
+    if (card.status === 'Redeemed') {
+      return res.status(400).json({ error: 'Card already redeemed' })
+    }
+
+    // Update card status to Redeemed
+    const result = await pool.query(
+      `UPDATE cards 
+       SET status = 'Redeemed', redeemed_date = CURRENT_DATE 
+       WHERE id = $1 
+       RETURNING *`,
+      [cardId]
+    )
+
+    res.json({ 
+      message: 'Card redeemed successfully by admin',
+      card: result.rows[0]
+    })
+  } catch (error) {
+    console.error('Error redeeming card (admin):', error)
+    res.status(500).json({ error: 'Failed to redeem card' })
+  }
+})
+
+
 // ============ DELETE ENDPOINTS (Super Admin Only) ============
 
 // ============ ADMIN LISTING ENDPOINTS (Super Admin Only) ============
