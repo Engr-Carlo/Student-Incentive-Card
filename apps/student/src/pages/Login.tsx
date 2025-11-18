@@ -13,7 +13,6 @@ export default function Login(){
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showForgotModal, setShowForgotModal] = useState(false)
-  const [forgotEmail, setForgotEmail] = useState('')
   const [forgotLoading, setForgotLoading] = useState(false)
   const [forgotSuccess, setForgotSuccess] = useState('')
   const [forgotError, setForgotError] = useState('')
@@ -53,8 +52,12 @@ export default function Login(){
     }
   }
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setForgotError('Please enter your email address in the login form first')
+      return
+    }
+
     setForgotError('')
     setForgotSuccess('')
     setForgotLoading(true)
@@ -63,7 +66,7 @@ export default function Login(){
       const response = await fetch(`${API_URL}/api/students/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail })
+        body: JSON.stringify({ email })
       })
 
       if (!response.ok) {
@@ -71,10 +74,9 @@ export default function Login(){
         throw new Error(data.error || 'Failed to send password reset email')
       }
 
-      setForgotSuccess('Password has been sent to your email!')
+      setForgotSuccess('Password reset link has been sent to your email!')
       setTimeout(() => {
         setShowForgotModal(false)
-        setForgotEmail('')
         setForgotSuccess('')
       }, 3000)
     } catch (err: any) {
@@ -187,65 +189,57 @@ export default function Login(){
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 max-w-md w-full shadow-2xl">
             <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">Forgot Password?</h3>
-            <p className="text-sm sm:text-base text-gray-600 mb-6">Enter your email and we'll send your password to your registered email address.</p>
+            <p className="text-sm sm:text-base text-gray-600 mb-4">We'll send a password reset link to your registered email address.</p>
             
-            <form onSubmit={handleForgotPassword} className="space-y-4">
-              <div>
-                <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
-                  <Mail size={14} className="sm:w-4 sm:h-4" />
-                  Email Address
-                </label>
-                <input 
-                  type="email"
-                  className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200" 
-                  style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
-                  placeholder="your.email@university.edu" 
-                  value={forgotEmail}
-                  onChange={e => setForgotEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              {forgotError && (
-                <div className="bg-red-50 border border-red-300 text-red-800 p-3 rounded-lg flex items-start gap-2">
-                  <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
-                  <p className="text-xs sm:text-sm">{forgotError}</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-start gap-2">
+                <Mail size={20} className="text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-900 mb-1">Email Address:</p>
+                  <p className="text-sm text-blue-700 font-mono break-all">{email || 'Please enter your email in the login form'}</p>
                 </div>
-              )}
-
-              {forgotSuccess && (
-                <div className="bg-green-50 border border-green-300 text-green-800 p-3 rounded-lg flex items-start gap-2">
-                  <Send size={16} className="flex-shrink-0 mt-0.5" />
-                  <p className="text-xs sm:text-sm">{forgotSuccess}</p>
-                </div>
-              )}
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowForgotModal(false)
-                    setForgotEmail('')
-                    setForgotError('')
-                    setForgotSuccess('')
-                  }}
-                  className="flex-1 py-2.5 sm:py-3 px-4 border-2 border-gray-300 text-gray-700 rounded-lg sm:rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={forgotLoading}
-                  className="flex-1 py-2.5 sm:py-3 px-4 text-white rounded-lg sm:rounded-xl font-semibold disabled:opacity-50 transition-all duration-200 flex items-center justify-center gap-2"
-                  style={{backgroundColor: '#003f88'}}
-                  onMouseEnter={(e) => !forgotLoading && (e.currentTarget.style.backgroundColor = '#002a5c')}
-                  onMouseLeave={(e) => !forgotLoading && (e.currentTarget.style.backgroundColor = '#003f88')}
-                >
-                  <Send size={16} className="sm:w-4 sm:h-4" />
-                  {forgotLoading ? 'Sending...' : 'Send Password'}
-                </button>
               </div>
-            </form>
+            </div>
+
+            {forgotError && (
+              <div className="bg-red-50 border border-red-300 text-red-800 p-3 rounded-lg flex items-start gap-2 mb-4">
+                <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
+                <p className="text-xs sm:text-sm">{forgotError}</p>
+              </div>
+            )}
+
+            {forgotSuccess && (
+              <div className="bg-green-50 border border-green-300 text-green-800 p-3 rounded-lg flex items-start gap-2 mb-4">
+                <Send size={16} className="flex-shrink-0 mt-0.5" />
+                <p className="text-xs sm:text-sm font-medium">{forgotSuccess}</p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotModal(false)
+                  setForgotError('')
+                  setForgotSuccess('')
+                }}
+                className="flex-1 py-2.5 sm:py-3 px-4 border-2 border-gray-300 text-gray-700 rounded-lg sm:rounded-xl font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={forgotLoading || !email}
+                className="flex-1 py-2.5 sm:py-3 px-4 text-white rounded-lg sm:rounded-xl font-semibold disabled:opacity-50 transition-all duration-200 flex items-center justify-center gap-2"
+                style={{backgroundColor: '#003f88'}}
+                onMouseEnter={(e) => !forgotLoading && email && (e.currentTarget.style.backgroundColor = '#002a5c')}
+                onMouseLeave={(e) => !forgotLoading && email && (e.currentTarget.style.backgroundColor = '#003f88')}
+              >
+                <Send size={16} className="sm:w-4 sm:h-4" />
+                {forgotLoading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </div>
           </div>
         </div>
       )}

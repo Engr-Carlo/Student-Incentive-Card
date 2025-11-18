@@ -14,6 +14,10 @@ const app = express()
 const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production'
 
+// Store for verification codes and reset tokens (in-memory)
+const verificationCodes = new Map()
+const resetTokens = new Map() // { token: { email, type: 'student'|'admin', expires } }
+
 // Email transporter configuration
 let transporter
 const isEmailConfigured = process.env.EMAIL_USER && process.env.EMAIL_USER !== 'your-gmail-account@gmail.com'
@@ -344,11 +348,25 @@ app.post('/api/students/forgot-password', async (req, res) => {
       return res.status(503).json({ error: 'Email service not configured. Please contact administrator.' })
     }
 
-    // Send password via email
+    // Generate unique reset token
+    const resetToken = crypto.randomBytes(32).toString('hex')
+    
+    // Store token with 1-hour expiration
+    resetTokens.set(resetToken, {
+      email: student.email,
+      type: 'student',
+      expires: Date.now() + 60 * 60 * 1000 // 1 hour
+    })
+
+    // Build reset link based on environment
+    const studentAppUrl = process.env.STUDENT_APP_URL || 'https://incentive-card-student.vercel.app'
+    const resetLink = `${studentAppUrl}/reset-password?token=${resetToken}`
+
+    // Send reset email
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Student Incentive Card - Password Recovery',
+      subject: 'Student Incentive Card - Password Reset Request',
       html: `
         <!DOCTYPE html>
         <html>
@@ -358,8 +376,7 @@ app.post('/api/students/forgot-password', async (req, res) => {
             .container { max-width: 600px; margin: 0 auto; padding: 20px; }
             .header { background-color: #003f88; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
             .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
-            .password-box { background-color: white; border: 2px solid #003f88; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
-            .password { font-size: 24px; font-weight: bold; color: #003f88; letter-spacing: 2px; }
+            .button { display: inline-block; background-color: #003f88; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
             .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
             .warning { background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; }
           </style>
@@ -367,20 +384,24 @@ app.post('/api/students/forgot-password', async (req, res) => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>Password Recovery</h1>
+              <h1>🔐 Password Reset Request</h1>
             </div>
             <div class="content">
               <p>Hello ${student.first_name} ${student.last_name},</p>
-              <p>You requested to recover your password for the Student Incentive Card System.</p>
+              <p>We received a request to reset your password for the Student Incentive Card System.</p>
               
-              <div class="password-box">
-                <p style="margin: 0 0 10px 0; color: #666;">Your Password:</p>
-                <div class="password">${student.password}</div>
-              </div>
+              <p style="text-align: center;">
+                <a href="${resetLink}" class="button">Reset Your Password</a>
+              </p>
+
+              <p style="color: #666; font-size: 14px;">Or copy and paste this link into your browser:</p>
+              <p style="background-color: #e9ecef; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px;">
+                ${resetLink}
+              </p>
 
               <div class="warning">
                 <strong>⚠️ Security Notice:</strong>
-                <p style="margin: 5px 0 0 0;">For security reasons, we recommend changing your password after logging in. Keep this password confidential and do not share it with anyone.</p>
+                <p style="margin: 5px 0 0 0;">This link will expire in 1 hour. If you did not request a password reset, please ignore this email and your password will remain unchanged.</p>
               </div>
 
               <p><strong>Your Account Details:</strong></p>
@@ -388,8 +409,6 @@ app.post('/api/students/forgot-password', async (req, res) => {
                 <li>Email: ${student.email}</li>
                 <li>Student ID: ${student.student_id}</li>
               </ul>
-
-              <p>If you did not request this password recovery, please contact the administrator immediately.</p>
             </div>
             <div class="footer">
               <p>Student Incentive Card System</p>
@@ -403,10 +422,51 @@ app.post('/api/students/forgot-password', async (req, res) => {
 
     await transporter.sendMail(mailOptions)
 
-    res.json({ message: 'Password has been sent to your email address' })
+    res.json({ message: 'Password reset link has been sent to your email address' })
   } catch (error) {
     console.error('Forgot password error:', error)
-    res.status(500).json({ error: 'Failed to send password recovery email' })
+    res.status(500).json({ error: 'Failed to send password reset email' })
+  }
+})
+
+// Reset student password with token
+app.post('/api/students/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body
+
+    // Validate token
+    const tokenData = resetTokens.get(token)
+    if (!tokenData || tokenData.type !== 'student') {
+      return res.status(400).json({ error: 'Invalid or expired reset token' })
+    }
+
+    // Check if token expired
+    if (Date.now() > tokenData.expires) {
+      resetTokens.delete(token)
+      return res.status(400).json({ error: 'Reset token has expired' })
+    }
+
+    // Validate new password
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Password must be at least 6 characters long' })
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10)
+
+    // Update student password
+    await pool.query(
+      'UPDATE students SET password_hash = $1, password = $2 WHERE email = $3',
+      [hashedPassword, newPassword, tokenData.email]
+    )
+
+    // Delete used token
+    resetTokens.delete(token)
+
+    res.json({ message: 'Password has been reset successfully' })
+  } catch (error) {
+    console.error('Reset password error:', error)
+    res.status(500).json({ error: 'Failed to reset password' })
   }
 })
 
