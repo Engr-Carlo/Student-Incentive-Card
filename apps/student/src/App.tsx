@@ -50,9 +50,9 @@ export default function App() {
     </Link>
   )
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <header className="shadow-lg sticky top-0 z-50" style={{backgroundColor: '#003f88'}}>
-        <div className="max-w-7xl mx-auto px-4 py-4">
+    <div className="min-h-screen flex flex-col bg-gray-50 overflow-x-hidden">
+      <header className="shadow-lg sticky top-0 z-50 w-full" style={{backgroundColor: '#003f88'}}>
+        <div className="max-w-7xl mx-auto px-4 py-4 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Logo />
@@ -80,8 +80,8 @@ export default function App() {
       <main className="flex-1 max-w-7xl mx-auto px-4 py-8 w-full">
         <Outlet />
       </main>
-      <footer className="glass mt-auto border-t border-white/20">
-        <div className="max-w-7xl mx-auto px-4 py-5 text-center bg-white">
+      <footer className="glass mt-auto border-t border-white/20 w-full">
+        <div className="max-w-7xl mx-auto px-4 py-5 text-center bg-white w-full">
           <p className="text-gray-700 font-medium">College of Engineering — University of Cabuyao</p>
           <p className="text-xs text-gray-400 mt-1">Developed by Engr. Carlo</p>
         </div>
