@@ -432,28 +432,38 @@ app.post('/api/students/forgot-password', async (req, res) => {
 // Reset student password with token
 app.post('/api/students/reset-password', async (req, res) => {
   try {
+    console.log('Reset password request received')
     const { token, newPassword } = req.body
+    console.log('Token received:', token ? 'Yes' : 'No')
+    console.log('New password received:', newPassword ? 'Yes' : 'No')
 
     // Validate token
     const tokenData = resetTokens.get(token)
+    console.log('Token data found:', tokenData ? 'Yes' : 'No')
+    
     if (!tokenData || tokenData.type !== 'student') {
+      console.log('Invalid token or wrong type')
       return res.status(400).json({ error: 'Invalid or expired reset token' })
     }
 
     // Check if token expired
     if (Date.now() > tokenData.expires) {
+      console.log('Token expired')
       resetTokens.delete(token)
       return res.status(400).json({ error: 'Reset token has expired' })
     }
 
     // Validate new password
     if (!newPassword || newPassword.length < 6) {
+      console.log('Password validation failed')
       return res.status(400).json({ error: 'Password must be at least 6 characters long' })
     }
 
+    console.log('Hashing password...')
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10)
 
+    console.log('Updating database for email:', tokenData.email)
     // Update student password
     await pool.query(
       'UPDATE students SET password_hash = $1, password = $2 WHERE email = $3',
@@ -462,6 +472,7 @@ app.post('/api/students/reset-password', async (req, res) => {
 
     // Delete used token
     resetTokens.delete(token)
+    console.log('Password reset successful')
 
     res.json({ message: 'Password has been reset successfully' })
   } catch (error) {

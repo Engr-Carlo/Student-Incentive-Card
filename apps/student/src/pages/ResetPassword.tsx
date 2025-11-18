@@ -45,17 +45,27 @@ export default function ResetPassword() {
     setLoading(true)
 
     try {
+      console.log('Sending reset request to:', `${API_URL}/api/students/reset-password`)
+      console.log('With token:', token)
+      
       const response = await fetch(`${API_URL}/api/students/reset-password`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ token, newPassword })
       })
 
+      console.log('Response status:', response.status)
+
       if (!response.ok) {
-        const data = await response.json()
+        const data = await response.json().catch(() => ({ error: 'Failed to reset password' }))
         throw new Error(data.error || 'Failed to reset password')
       }
 
+      const data = await response.json()
+      console.log('Success:', data)
+      
       setSuccess(true)
       
       // Redirect to login after 3 seconds
@@ -63,7 +73,8 @@ export default function ResetPassword() {
         navigate('/login')
       }, 3000)
     } catch (err: any) {
-      setError(err.message || 'Failed to reset password')
+      console.error('Reset password error:', err)
+      setError(err.message || 'Failed to reset password. Please try again or request a new reset link.')
     } finally {
       setLoading(false)
     }
