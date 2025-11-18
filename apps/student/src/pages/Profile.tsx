@@ -3,29 +3,60 @@ import { User, Info, BarChart3, FileText, CreditCard, CheckCircle, Upload, QrCod
 import { studentStore } from '../lib/api'
 import QRCodeLib from 'qrcode'
 
+interface ProfileData {
+  student_id: string
+  first_name: string
+  last_name: string
+  email: string
+  program: string
+  year_level: string
+}
+
 export default function Profile(){
+  // Build API base URL
+  let raw = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+  if (!/^https?:\/\//.test(raw)) raw = `https://${raw}`
+  const API_URL = raw.replace(/\/$/, '')
+  
   const [stats, setStats] = useState({ total: 0, unused: 0, redeemed: 0, pending: 0 })
   const [history, setHistory] = useState<any[]>([])
   const [showQR, setShowQR] = useState(false)
   const [qrDataURL, setQrDataURL] = useState('')
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  
-  const profile = {
-    name: localStorage.getItem('student_name') || 'Student',
-    studentId: localStorage.getItem('student_id') || '',
+  const [profile, setProfile] = useState<ProfileData>({
+    student_id: localStorage.getItem('student_id') || '',
+    first_name: '',
+    last_name: '',
     email: localStorage.getItem('student_email') || '',
-    program: 'BS Computer Engineering',
-    yearLevel: '3rd Year'
-  }
+    program: '',
+    year_level: ''
+  })
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    loadProfile()
     studentStore.getStats().then(setStats)
     studentStore.getActivityHistory().then(setHistory)
   }, [])
 
+  const loadProfile = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/students/${localStorage.getItem('student_id')}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(data)
+      }
+    } catch (error) {
+      console.error('Error loading profile:', error)
+    }
+  }
+
   const generateQR = async () => {
     try {
-      const qrData = await QRCodeLib.toDataURL(profile.studentId, {
+      const qrData = await QRCodeLib.toDataURL(profile.student_id, {
         width: 300,
         margin: 2,
         color: {
@@ -43,7 +74,7 @@ export default function Profile(){
   const downloadQR = () => {
     const link = document.createElement('a')
     link.href = qrDataURL
-    link.download = `student-qr-${profile.studentId}.png`
+    link.download = `student-qr-${profile.student_id}.png`
     link.click()
   }
   return (
@@ -65,12 +96,12 @@ export default function Profile(){
             <div className="space-y-3 sm:space-y-4">
               <div className="pb-2 sm:pb-3 border-b border-gray-200">
                 <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Name</label>
-                <p className="font-semibold text-base sm:text-lg">{profile.name}</p>
+                <p className="font-semibold text-base sm:text-lg">{profile.first_name} {profile.last_name}</p>
               </div>
               <div className="pb-2 sm:pb-3 border-b border-gray-200">
                 <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Student ID</label>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-                  <p className="font-semibold text-sm sm:text-base">{profile.studentId}</p>
+                  <p className="font-semibold text-sm sm:text-base">{profile.student_id}</p>
                   <button
                     onClick={generateQR}
                     className="w-full sm:w-auto px-3 py-1.5 sm:py-1 rounded-lg text-white text-xs sm:text-sm font-medium transition-all hover:shadow-lg flex items-center justify-center gap-1"
@@ -93,7 +124,7 @@ export default function Profile(){
               </div>
               <div>
                 <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Year Level</label>
-                <p className="font-semibold text-sm sm:text-base">{profile.yearLevel}</p>
+                <p className="font-semibold text-sm sm:text-base">{profile.year_level}</p>
               </div>
             </div>
           </div>
@@ -172,8 +203,8 @@ export default function Profile(){
             </div>
 
             <div className="text-center mb-6">
-              <p className="text-lg font-bold text-gray-800">{profile.name}</p>
-              <p className="text-sm text-gray-600">Student ID: {profile.studentId}</p>
+              <p className="text-lg font-bold text-gray-800">{profile.first_name} {profile.last_name}</p>
+              <p className="text-sm text-gray-600">Student ID: {profile.student_id}</p>
             </div>
 
             <div className="flex gap-3">
