@@ -10,6 +10,7 @@ import Profile from './pages/Profile'
 import Settings from './pages/Settings'
 import Register from './pages/Register'
 import Login from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 
 // Protected Route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -24,6 +25,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/student" element={<ProtectedRoute><App /></ProtectedRoute>}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
