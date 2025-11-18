@@ -693,6 +693,47 @@ app.get('/api/cards', async (req, res) => {
   }
 })
 
+// Redeem a card (Student)
+app.post('/api/cards/:cardId/redeem', authenticateStudent, async (req, res) => {
+  try {
+    const { cardId } = req.params
+    const student_id = req.student.student_id
+
+    // Check if card exists and belongs to the student
+    const cardCheck = await pool.query(
+      'SELECT * FROM cards WHERE id = $1 AND student_id = $2',
+      [cardId, student_id]
+    )
+
+    if (cardCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Card not found' })
+    }
+
+    const card = cardCheck.rows[0]
+
+    if (card.status === 'Redeemed') {
+      return res.status(400).json({ error: 'Card already redeemed' })
+    }
+
+    // Update card status to Redeemed
+    const result = await pool.query(
+      `UPDATE cards 
+       SET status = 'Redeemed', redeemed_date = CURRENT_DATE 
+       WHERE id = $1 
+       RETURNING *`,
+      [cardId]
+    )
+
+    res.json({ 
+      message: 'Card redeemed successfully',
+      card: result.rows[0]
+    })
+  } catch (error) {
+    console.error('Error redeeming card:', error)
+    res.status(500).json({ error: 'Failed to redeem card' })
+  }
+})
+
 // ============ DELETE ENDPOINTS (Super Admin Only) ============
 
 // ============ ADMIN LISTING ENDPOINTS (Super Admin Only) ============

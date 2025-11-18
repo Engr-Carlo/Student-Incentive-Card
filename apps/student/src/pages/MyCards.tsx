@@ -1,21 +1,76 @@
 import { useState, useEffect } from 'react'
-import { Award, CheckCircle, XCircle, Eye, Sparkles, Gift, Calendar, Star } from 'lucide-react'
+import { Award, CheckCircle, XCircle, Eye, Sparkles, Gift, Calendar, Star, X } from 'lucide-react'
 import { studentStore, type Card } from '../lib/api'
 
 type Tier = 'Gold' | 'Silver' | 'Bronze'
 
 export default function MyCards(){
+  // Build API base URL
+  let raw = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
+  if (!/^https?:\/\//.test(raw)) raw = `https://${raw}`
+  const API_URL = raw.replace(/\/$/, '')
+  
   const [cards, setCards] = useState<Card[]>([])
   const [filter, setFilter] = useState<'all'|'unused'|'redeemed'>('all')
+  const [selectedCard, setSelectedCard] = useState<Card | null>(null)
+  const [showViewModal, setShowViewModal] = useState(false)
+  const [redeeming, setRedeeming] = useState(false)
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
+    loadCards()
+  }, [])
+
+  const loadCards = () => {
     studentStore.getCards()
       .then(setCards)
       .catch(err => {
         console.error('Failed to load cards:', err)
         setCards([])
       })
-  }, [])
+  }
+
+  const handleViewCard = (card: Card) => {
+    setSelectedCard(card)
+    setShowViewModal(true)
+  }
+
+  const handleRedeemCard = async (card: Card) => {
+    if (!confirm('Are you sure you want to redeem this card? This action cannot be undone.')) {
+      return
+    }
+
+    setRedeeming(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const response = await fetch(`${API_URL}/api/cards/${card.id}/redeem`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to redeem card')
+      }
+
+      setMessage('Card redeemed successfully!')
+      setTimeout(() => setMessage(''), 3000)
+      
+      // Reload cards to reflect the change
+      loadCards()
+    } catch (err: any) {
+      setError(err.message)
+      setTimeout(() => setError(''), 5000)
+    } finally {
+      setRedeeming(false)
+    }
+  }
 
   const filtered = cards.filter(c => filter === 'all' || c.status.toLowerCase() === filter)
 
@@ -66,6 +121,20 @@ export default function MyCards(){
           </div>
         </div>
       </div>
+
+      {/* Success/Error Messages */}
+      {message && (
+        <div className="bg-green-50 border border-green-300 text-green-800 p-4 rounded-xl flex items-center gap-3">
+          <CheckCircle size={20} />
+          <span className="font-semibold">{message}</span>
+        </div>
+      )}
+      {error && (
+        <div className="bg-red-50 border border-red-300 text-red-800 p-4 rounded-xl flex items-center gap-3">
+          <XCircle size={20} />
+          <span className="font-semibold">{error}</span>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="glass rounded-2xl p-16 text-center border border-white/20 shadow-xl">
@@ -158,19 +227,130 @@ export default function MyCards(){
 
               {/* Actions */}
               <div className="flex gap-2">
-                <button className="flex-1 text-white text-sm py-2 px-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1" style={{backgroundColor: '#003f88'}} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#002a5c'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#003f88'}>
+                <button 
+                  onClick={() => handleViewCard(card)}
+                  className="flex-1 text-white text-sm py-2 px-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-1" 
+                  style={{backgroundColor: '#003f88'}} 
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#002a5c'} 
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#003f88'}
+                >
                   <Eye size={16} />
                   View
                 </button>
                 {card.status === 'Unused' && (
-                  <button className="flex-1 bg-green-600 text-white text-sm py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-1">
+                  <button 
+                    onClick={() => handleRedeemCard(card)}
+                    disabled={redeeming}
+                    className="flex-1 bg-green-600 text-white text-sm py-2 px-3 rounded-lg font-medium hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-1 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
                     <Sparkles size={16} />
-                    Redeem
+                    {redeeming ? 'Redeeming...' : 'Redeem'}
                   </button>
                 )}
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* View Card Modal */}
+      {showViewModal && selectedCard && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowViewModal(false)}>
+          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-2xl font-bold text-gray-800">Card Details</h3>
+              <button 
+                onClick={() => setShowViewModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} className="text-gray-600" />
+              </button>
+            </div>
+
+            {/* Tier Badge */}
+            <div className="mb-6">
+              <div className={`inline-flex ${getTierClass(selectedCard.tier)} px-6 py-3 rounded-full text-lg font-bold shadow-xl items-center gap-2`}>
+                <Star size={20} className="fill-current" />
+                {selectedCard.tier} Tier
+              </div>
+            </div>
+
+            {/* Card Information */}
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-lg font-bold text-gray-800 mb-2">{selectedCard.package_name}</h4>
+                <div className={`inline-flex px-4 py-2 rounded-lg text-sm font-bold ${
+                  selectedCard.status === 'Unused' 
+                    ? 'bg-green-100 text-green-700' 
+                    : 'bg-gray-100 text-gray-700'
+                }`}>
+                  Status: {selectedCard.status}
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="bg-indigo-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-1">Event Type</p>
+                  <p className="font-bold text-gray-800">{selectedCard.event_type}</p>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-4">
+                  <p className="text-sm text-gray-600 mb-1">Competition Level</p>
+                  <p className="font-bold text-gray-800">{selectedCard.competition_level}</p>
+                </div>
+              </div>
+
+              {/* Benefits */}
+              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-100">
+                <h5 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <Gift size={20} className="text-indigo-500" />
+                  Benefits Included
+                </h5>
+                <ul className="space-y-3">
+                  {selectedCard.benefits.map((b, i) => (
+                    <li key={i} className="flex items-start gap-3">
+                      <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-gray-700 font-medium">{b}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Dates */}
+              <div className="bg-gray-50 rounded-xl p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                  <Calendar size={18} className="text-blue-500" />
+                  <div>
+                    <p className="text-sm text-gray-600">Issued Date</p>
+                    <p className="font-bold text-gray-800">{selectedCard.issued_date}</p>
+                  </div>
+                </div>
+                {selectedCard.redeemed_date && (
+                  <div className="flex items-center gap-3">
+                    <CheckCircle size={18} className="text-green-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Redeemed Date</p>
+                      <p className="font-bold text-gray-800">{selectedCard.redeemed_date}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Action Button */}
+              {selectedCard.status === 'Unused' && (
+                <button
+                  onClick={() => {
+                    setShowViewModal(false)
+                    handleRedeemCard(selectedCard)
+                  }}
+                  disabled={redeeming}
+                  className="w-full bg-green-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-green-700 transition-all duration-200 flex items-center justify-center gap-2 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  <Sparkles size={20} />
+                  {redeeming ? 'Redeeming...' : 'Redeem This Card'}
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </section>
