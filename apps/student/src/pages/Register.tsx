@@ -266,15 +266,15 @@ export default function Register(){
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <User size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <User size={14} className="sm:w-4 sm:h-4" />
                 First Name
               </label>
               <input 
                 name="firstName"
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200" 
+                className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200" 
                 style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                 placeholder="Juan" 
                 value={formData.firstName}
@@ -284,13 +284,13 @@ export default function Register(){
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <User size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <User size={14} className="sm:w-4 sm:h-4" />
                 Last Name
               </label>
               <input 
                 name="lastName"
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200" 
+                className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200" 
                 style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                 placeholder="Dela Cruz" 
                 value={formData.lastName}
@@ -300,15 +300,15 @@ export default function Register(){
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <BookOpen size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <BookOpen size={14} className="sm:w-4 sm:h-4" />
                 Program/Course
               </label>
               <select 
                 name="program"
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200 bg-white" 
+                className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200 bg-white" 
                 style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                 value={formData.program}
                 onChange={handleChange}
@@ -324,13 +324,13 @@ export default function Register(){
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <BookOpen size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <BookOpen size={14} className="sm:w-4 sm:h-4" />
                 Year Level
               </label>
               <select 
                 name="yearLevel"
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200 bg-white" 
+                className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200 bg-white" 
                 style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                 value={formData.yearLevel}
                 onChange={handleChange}
@@ -346,16 +346,16 @@ export default function Register(){
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <Lock size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <Lock size={14} className="sm:w-4 sm:h-4" />
                 Password
               </label>
               <input 
                 type="password"
                 name="password"
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200" 
+                className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200" 
                 style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                 placeholder="••••••••" 
                 value={formData.password}
@@ -366,14 +366,14 @@ export default function Register(){
             </div>
 
             <div>
-              <label className="flex items-center gap-2 text-sm font-semibold mb-2 text-gray-700">
-                <Lock size={16} />
+              <label className="flex items-center gap-2 text-xs sm:text-sm font-semibold mb-2 text-gray-700">
+                <Lock size={14} className="sm:w-4 sm:h-4" />
                 Confirm Password
               </label>
               <input 
                 type="password"
                 name="confirmPassword"
-                className="w-full border-2 border-gray-200 rounded-xl p-3 focus:ring-2 focus:border-transparent transition-all duration-200" 
+                className="w-full border-2 border-gray-200 rounded-lg sm:rounded-xl p-2.5 sm:p-3 text-sm sm:text-base focus:ring-2 focus:border-transparent transition-all duration-200" 
                 style={{'--tw-ring-color': '#003f88'} as React.CSSProperties}
                 placeholder="••••••••" 
                 value={formData.confirmPassword}

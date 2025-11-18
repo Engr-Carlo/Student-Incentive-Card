@@ -232,6 +232,15 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const { student_id, email, password, first_name, last_name, program, year_level } = req.body
 
+    // Debug logging
+    console.log('📝 Registration request received:')
+    console.log('  Student ID:', student_id)
+    console.log('  Email:', email)
+    console.log('  First Name:', first_name)
+    console.log('  Last Name:', last_name)
+    console.log('  Program:', program)
+    console.log('  Year Level:', year_level)
+
     // Check if student_id or email already exists
     const existingUser = await pool.query(
       'SELECT * FROM students WHERE student_id = $1 OR email = $2',
