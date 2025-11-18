@@ -139,34 +139,34 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-4 sm:space-y-6 animate-fadeIn px-4 sm:px-0">
       {/* Header with Weather */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 glass rounded-2xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <div className="lg:col-span-2 glass rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg sm:shadow-xl border border-white/20 transition-all duration-300">
+          <h1 className="text-2xl sm:text-3xl lg:text-5xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent mb-2 sm:mb-3">
             {getGreeting()}, {firstName}! 👋
           </h1>
-          <p className="text-gray-600 text-lg">Welcome to your incentive card dashboard</p>
+          <p className="text-gray-600 text-sm sm:text-base lg:text-lg">Welcome to your incentive card dashboard</p>
         </div>
 
         {weather && (
-          <div className="glass rounded-2xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <div className="flex items-center justify-between mb-4">
+          <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg sm:shadow-xl border border-white/20 transition-all duration-300">
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div>
-                <p className="text-sm text-gray-500 flex items-center gap-1 mb-1">
-                  <Eye size={14} /> {weather.location}
+                <p className="text-xs sm:text-sm text-gray-500 flex items-center gap-1 mb-1">
+                  <Eye size={12} className="sm:w-3.5 sm:h-3.5" /> {weather.location}
                 </p>
-                <p className="text-6xl font-bold bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <p className="text-4xl sm:text-5xl lg:text-6xl font-bold bg-gradient-to-br from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   {weather.temp}°
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Feels like {weather.feels_like}°C</p>
               </div>
-              <div className="transform hover:scale-110 transition-transform">
+              <div className="transform transition-transform scale-75 sm:scale-100">
                 {getWeatherIcon(weather.description)}
               </div>
             </div>
-            <p className="text-sm text-gray-700 capitalize mb-3 font-medium">{weather.description}</p>
-            <div className="flex gap-4 text-xs text-gray-600 bg-white/50 rounded-lg p-2">
+            <p className="text-xs sm:text-sm text-gray-700 capitalize mb-2 sm:mb-3 font-medium">{weather.description}</p>
+            <div className="flex gap-3 sm:gap-4 text-xs text-gray-600 bg-white/50 rounded-lg p-2">
               <span className="flex items-center gap-1">
                 <Droplets size={14} className="text-blue-500" /> {weather.humidity}%
               </span>
@@ -179,108 +179,108 @@ export default function Dashboard() {
       </div>
 
       {/* Statistics Dashboard */}
-      <div className="glass rounded-2xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-xl">
-            <TrendingUp size={28} className="text-white" />
+      <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg sm:shadow-xl border border-white/20 transition-all duration-300">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 sm:mb-6 lg:mb-8 flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 bg-gradient-to-br from-indigo-500 to-blue-500 rounded-lg sm:rounded-xl">
+            <TrendingUp size={20} className="text-white sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
           </div>
           Your Statistics
         </h2>
         
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white shadow-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer">
-            <p className="text-6xl font-bold mb-2">{stats.total_cards}</p>
-            <p className="text-sm opacity-90 font-medium">Total Cards</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-4 sm:mb-6 lg:mb-8">
+          <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 text-white shadow-lg sm:shadow-xl transition-all duration-300 active:scale-95 sm:hover:scale-105 cursor-pointer">
+            <p className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-1 sm:mb-2">{stats.total_cards}</p>
+            <p className="text-xs sm:text-sm opacity-90 font-medium">Total Cards</p>
           </div>
 
-          <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-2xl p-6 text-white shadow-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer">
-            <p className="text-6xl font-bold mb-2">{stats.gold_cards}</p>
-            <p className="text-sm opacity-90 font-medium">Gold Tier</p>
+          <div className="bg-gradient-to-br from-yellow-400 to-yellow-500 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 text-white shadow-lg sm:shadow-xl transition-all duration-300 active:scale-95 sm:hover:scale-105 cursor-pointer">
+            <p className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-1 sm:mb-2">{stats.gold_cards}</p>
+            <p className="text-xs sm:text-sm opacity-90 font-medium">Gold Tier</p>
           </div>
 
-          <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-2xl p-6 text-white shadow-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer">
-            <p className="text-6xl font-bold mb-2">{stats.silver_cards}</p>
-            <p className="text-sm opacity-90 font-medium">Silver Tier</p>
+          <div className="bg-gradient-to-br from-gray-400 to-gray-500 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 text-white shadow-lg sm:shadow-xl transition-all duration-300 active:scale-95 sm:hover:scale-105 cursor-pointer">
+            <p className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-1 sm:mb-2">{stats.silver_cards}</p>
+            <p className="text-xs sm:text-sm opacity-90 font-medium">Silver Tier</p>
           </div>
 
-          <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-2xl p-6 text-white shadow-xl transform transition-all duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer">
-            <p className="text-6xl font-bold mb-2">{stats.bronze_cards}</p>
-            <p className="text-sm opacity-90 font-medium">Bronze Tier</p>
+          <div className="bg-gradient-to-br from-orange-400 to-orange-500 rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 text-white shadow-lg sm:shadow-xl transition-all duration-300 active:scale-95 sm:hover:scale-105 cursor-pointer">
+            <p className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-1 sm:mb-2">{stats.bronze_cards}</p>
+            <p className="text-xs sm:text-sm opacity-90 font-medium">Bronze Tier</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="glass border-2 border-green-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer">
-            <p className="text-5xl font-bold text-green-600 mb-2">{stats.unused_cards}</p>
-            <p className="text-sm text-gray-600 font-medium">Unused Cards</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+          <div className="glass border-2 border-green-200 rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 transition-all duration-300 active:scale-95 sm:hover:scale-105 cursor-pointer">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-green-600 mb-1 sm:mb-2">{stats.unused_cards}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-medium">Unused Cards</p>
           </div>
 
-          <div className="glass border-2 border-blue-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer">
-            <p className="text-5xl font-bold text-blue-600 mb-2">{stats.redeemed_cards}</p>
-            <p className="text-sm text-gray-600 font-medium">Redeemed Cards</p>
+          <div className="glass border-2 border-blue-200 rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 transition-all duration-300 active:scale-95 sm:hover:scale-105 cursor-pointer">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-blue-600 mb-1 sm:mb-2">{stats.redeemed_cards}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-medium">Redeemed Cards</p>
           </div>
 
-          <div className="glass border-2 border-purple-200 rounded-2xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer">
-            <p className="text-5xl font-bold text-purple-600 mb-2">{stats.total_benefits}</p>
-            <p className="text-sm text-gray-600 font-medium">Total Benefits</p>
+          <div className="glass border-2 border-purple-200 rounded-lg sm:rounded-xl lg:rounded-2xl p-4 sm:p-5 lg:p-6 transition-all duration-300 active:scale-95 sm:hover:scale-105 cursor-pointer">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-purple-600 mb-1 sm:mb-2">{stats.total_benefits}</p>
+            <p className="text-xs sm:text-sm text-gray-600 font-medium">Total Benefits</p>
           </div>
         </div>
       </div>
 
       {/* Achievement Timeline */}
-      <div className="glass rounded-2xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300">
-        <h2 className="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl">
-            <Award size={28} className="text-white" />
+      <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 shadow-lg sm:shadow-xl border border-white/20 transition-all duration-300">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 mb-4 sm:mb-6 lg:mb-8 flex items-center gap-2 sm:gap-3">
+          <div className="p-1.5 sm:p-2 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg sm:rounded-xl">
+            <Award size={20} className="text-white sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
           </div>
           Achievement Timeline
         </h2>
 
         {loading ? (
-          <div className="text-center py-16">
-            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-indigo-600 border-t-transparent"></div>
-            <p className="mt-6 text-gray-600 text-lg">Loading achievements...</p>
+          <div className="text-center py-12 sm:py-16">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-4 border-indigo-600 border-t-transparent"></div>
+            <p className="mt-4 sm:mt-6 text-gray-600 text-sm sm:text-base lg:text-lg">Loading achievements...</p>
           </div>
         ) : achievements.length === 0 ? (
-          <div className="text-center py-16 glass rounded-xl border border-gray-200">
-            <Award size={64} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500 text-lg">No achievements yet. Start participating in events!</p>
+          <div className="text-center py-12 sm:py-16 glass rounded-lg sm:rounded-xl border border-gray-200">
+            <Award size={48} className="mx-auto text-gray-300 mb-3 sm:mb-4 sm:w-16 sm:h-16" />
+            <p className="text-gray-500 text-sm sm:text-base lg:text-lg px-4">No achievements yet. Start participating in events!</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {achievements.map((achievement, index) => (
               <div key={achievement.id} className="relative animate-slideIn" style={{animationDelay: `${index * 0.1}s`}}>
                 {/* Timeline line */}
                 {index !== achievements.length - 1 && (
-                  <div className="absolute left-7 top-16 bottom-0 w-1 bg-gradient-to-b from-indigo-400 via-purple-400 to-transparent rounded-full"></div>
+                  <div className="absolute left-5 sm:left-7 top-12 sm:top-16 bottom-0 w-0.5 sm:w-1 bg-gradient-to-b from-indigo-400 via-purple-400 to-transparent rounded-full"></div>
                 )}
                 
-                <div className="flex gap-6 items-start">
+                <div className="flex gap-3 sm:gap-6 items-start">
                   {/* Timeline dot */}
-                  <div className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transform transition-all duration-300 hover:scale-110 ${
+                  <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center shadow-lg sm:shadow-2xl transform transition-all duration-300 active:scale-95 sm:hover:scale-110 ${
                     achievement.tier === 'Gold' ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 ring-4 ring-yellow-200' :
                     achievement.tier === 'Silver' ? 'bg-gradient-to-br from-gray-400 to-gray-600 ring-4 ring-gray-200' :
-                    'bg-gradient-to-br from-orange-400 to-orange-600 ring-4 ring-orange-200'
+                    'bg-gradient-to-br from-orange-400 to-orange-600 ring-2 sm:ring-4 ring-orange-200'
                   }`}>
-                    <Award size={28} className="text-white" />
+                    <Award size={18} className="text-white sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>
 
                   {/* Achievement card */}
-                  <div className="flex-1 glass rounded-2xl p-6 border-2 border-white/30 hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-bold text-xl text-gray-800 mb-1">{achievement.package_name}</h3>
-                        <p className="text-sm text-gray-600 font-medium">{achievement.event_type} • {achievement.competition_level}</p>
+                  <div className="flex-1 glass rounded-lg sm:rounded-xl lg:rounded-2xl p-3 sm:p-4 lg:p-6 border border-white/30 sm:border-2 transition-all duration-300 active:scale-[0.98] sm:hover:scale-[1.02] cursor-pointer">
+                    <div className="flex flex-col sm:flex-row items-start justify-between mb-3 gap-2 sm:gap-0">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-base sm:text-lg lg:text-xl text-gray-800 mb-1">{achievement.package_name}</h3>
+                        <p className="text-xs sm:text-sm text-gray-600 font-medium">{achievement.event_type} • {achievement.competition_level}</p>
                       </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`px-4 py-2 rounded-full text-xs font-bold shadow-md ${
+                      <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2">
+                        <span className={`px-2.5 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded-full text-[10px] sm:text-xs font-bold shadow-md ${
                           achievement.tier === 'Gold' ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900' :
                           achievement.tier === 'Silver' ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800' :
                           'bg-gradient-to-r from-orange-400 to-orange-500 text-orange-900'
                         }`}>
                           {achievement.tier}
                         </span>
-                        <span className={`px-4 py-2 rounded-full text-xs font-bold shadow-md ${
+                        <span className={`px-2.5 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded-full text-[10px] sm:text-xs font-bold shadow-md ${
                           achievement.status === 'Unused' ? 'bg-gradient-to-r from-green-400 to-green-500 text-green-900' : 'bg-gradient-to-r from-blue-400 to-blue-500 text-blue-900'
                         }`}>
                           {achievement.status}
@@ -288,12 +288,12 @@ export default function Dashboard() {
                       </div>
                     </div>
                     
-                    <div className="mb-4 bg-white/50 rounded-xl p-4">
-                      <p className="text-xs text-gray-600 font-bold uppercase mb-2 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                    <div className="mb-3 sm:mb-4 bg-white/50 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                      <p className="text-[10px] sm:text-xs text-gray-600 font-bold uppercase mb-2 flex items-center gap-1.5 sm:gap-2">
+                        <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-500 rounded-full"></span>
                         Benefits:
                       </p>
-                      <ul className="text-sm text-gray-700 space-y-2">
+                      <ul className="text-xs sm:text-sm text-gray-700 space-y-1.5 sm:space-y-2">
                         {achievement.benefits?.map((benefit, idx) => (
                           <li key={idx} className="flex items-start gap-2">
                             <span className="text-green-500 text-lg font-bold">✓</span>
@@ -303,8 +303,8 @@ export default function Dashboard() {
                       </ul>
                     </div>
 
-                    <div className="flex items-center gap-2 text-sm text-gray-500 bg-white/50 rounded-lg px-3 py-2 w-fit">
-                      <Calendar size={16} className="text-indigo-500" />
+                    <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-gray-500 bg-white/50 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 w-fit">
+                      <Calendar size={14} className="text-indigo-500 sm:w-4 sm:h-4" />
                       <span className="font-medium">Received on {formatDate(achievement.issued_date)}</span>
                     </div>
                   </div>

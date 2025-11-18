@@ -175,29 +175,29 @@ export default function Settings() {
   }
 
   const tabs = [
-    { id: 'profile' as const, label: 'Profile Info', icon: <User size={20} /> },
-    { id: 'password' as const, label: 'Change Password', icon: <Lock size={20} /> },
-    { id: 'preferences' as const, label: 'Preferences', icon: <Bell size={20} /> }
+    { id: 'profile' as const, label: 'Profile Info', icon: <User size={16} className="sm:w-5 sm:h-5" /> },
+    { id: 'password' as const, label: 'Change Password', icon: <Lock size={16} className="sm:w-5 sm:h-5" /> },
+    { id: 'preferences' as const, label: 'Preferences', icon: <Bell size={16} className="sm:w-5 sm:h-5" /> }
   ]
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="glass rounded-2xl p-6 shadow-xl">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your account settings and preferences</p>
+    <div className="max-w-4xl mx-auto space-y-4 sm:space-y-6 px-4 sm:px-0">
+      <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg sm:shadow-xl">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-2">Settings</h1>
+        <p className="text-sm sm:text-base text-gray-600">Manage your account settings and preferences</p>
       </div>
 
       {/* Tabs */}
-      <div className="glass rounded-2xl shadow-xl overflow-hidden">
+      <div className="glass rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl overflow-hidden">
         <div className="border-b border-gray-200 bg-white/50">
-          <div className="flex">
+          <div className="flex flex-col sm:flex-row">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 px-6 py-4 font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                className={`flex-1 px-4 py-3 sm:px-6 sm:py-4 font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base ${
                   activeTab === tab.id
-                    ? 'border-b-2 border-indigo-600 text-indigo-600 bg-white'
+                    ? 'border-l-4 sm:border-l-0 sm:border-b-2 border-indigo-600 text-indigo-600 bg-white'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-white/30'
                 }`}
               >
@@ -208,92 +208,92 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {/* Messages */}
           {message && (
-            <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+            <div className="mb-4 sm:mb-6 bg-green-50 border border-green-200 text-green-700 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg text-sm sm:text-base">
               {message}
             </div>
           )}
           {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <div className="mb-4 sm:mb-6 bg-red-50 border border-red-200 text-red-700 px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg text-sm sm:text-base">
               {error}
             </div>
           )}
 
           {/* Profile Tab */}
           {activeTab === 'profile' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-gray-800">Personal Information</h2>
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800">Personal Information</h2>
                 <button
                   onClick={generateQR}
-                  className="px-4 py-2 rounded-lg text-white font-medium transition-all hover:shadow-lg flex items-center gap-2"
+                  className="w-full sm:w-auto px-3 py-2 sm:px-4 sm:py-2 rounded-lg text-white font-medium transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
                   style={{backgroundColor: '#003f88'}}
                 >
-                  <QrCode size={18} />
+                  <QrCode size={16} className="sm:w-[18px] sm:h-[18px]" />
                   Show QR Code
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">First Name</label>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">First Name</label>
                   <input
                     type="text"
                     value={profile.first_name}
                     onChange={(e) => setProfile({...profile, first_name: e.target.value})}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Last Name</label>
                   <input
                     type="text"
                     value={profile.last_name}
                     onChange={(e) => setProfile({...profile, last_name: e.target.value})}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Student ID</label>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Student ID</label>
                   <input
                     type="text"
                     value={profile.student_id}
                     disabled
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed text-sm sm:text-base"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Email</label>
                   <input
                     type="email"
                     value={profile.email}
                     onChange={(e) => setProfile({...profile, email: e.target.value})}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Program</label>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Program</label>
                   <input
                     type="text"
                     value={profile.program}
                     onChange={(e) => setProfile({...profile, program: e.target.value})}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                     placeholder="e.g., BS Computer Engineering"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Year Level</label>
+                  <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Year Level</label>
                   <select
                     value={profile.year_level}
                     onChange={(e) => setProfile({...profile, year_level: e.target.value})}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                    className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                   >
                     <option value="">Select Year Level</option>
                     <option value="1st Year">1st Year</option>
@@ -307,10 +307,10 @@ export default function Settings() {
 
               <button
                 onClick={handleUpdateProfile}
-                className="w-full py-3 px-6 rounded-lg text-white font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2"
+                className="w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg text-white font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
                 style={{backgroundColor: '#003f88'}}
               >
-                <Save size={20} />
+                <Save size={18} className="sm:w-5 sm:h-5" />
                 Save Changes
               </button>
             </div>
@@ -318,46 +318,46 @@ export default function Settings() {
 
           {/* Password Tab */}
           {activeTab === 'password' && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">Change Password</h2>
+            <div className="space-y-4 sm:space-y-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">Change Password</h2>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Current Password</label>
                 <input
                   type="password"
                   value={passwordData.current_password}
                   onChange={(e) => setPasswordData({...passwordData, current_password: e.target.value})}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">New Password</label>
                 <input
                   type="password"
                   value={passwordData.new_password}
                   onChange={(e) => setPasswordData({...passwordData, new_password: e.target.value})}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                   placeholder="At least 6 characters"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                <label className="block text-xs sm:text-sm font-semibold text-gray-700 mb-1.5 sm:mb-2">Confirm New Password</label>
                 <input
                   type="password"
                   value={passwordData.confirm_password}
                   onChange={(e) => setPasswordData({...passwordData, confirm_password: e.target.value})}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors"
+                  className="w-full px-3 py-2.5 sm:px-4 sm:py-3 border-2 border-gray-200 rounded-lg focus:border-indigo-500 focus:outline-none transition-colors text-sm sm:text-base"
                 />
               </div>
 
               <button
                 onClick={handleChangePassword}
-                className="w-full py-3 px-6 rounded-lg text-white font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2"
+                className="w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg text-white font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
                 style={{backgroundColor: '#003f88'}}
               >
-                <Lock size={20} />
+                <Lock size={18} className="sm:w-5 sm:h-5" />
                 Change Password
               </button>
             </div>
@@ -365,16 +365,16 @@ export default function Settings() {
 
           {/* Preferences Tab */}
           {activeTab === 'preferences' && (
-            <div className="space-y-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">Notification Preferences</h2>
+            <div className="space-y-4 sm:space-y-6">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-6">Notification Preferences</h2>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 glass rounded-lg border-2 border-white/20">
-                  <div>
-                    <p className="font-semibold text-gray-800">Email Notifications</p>
-                    <p className="text-sm text-gray-600">Receive email updates about your cards</p>
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-center justify-between p-3 sm:p-4 glass rounded-lg border border-white/20 sm:border-2">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <p className="font-semibold text-gray-800 text-sm sm:text-base">Email Notifications</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Receive email updates about your cards</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                     <input
                       type="checkbox"
                       checked={preferences.email_notifications}
@@ -385,12 +385,12 @@ export default function Settings() {
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between p-4 glass rounded-lg border-2 border-white/20">
-                  <div>
-                    <p className="font-semibold text-gray-800">Achievement Alerts</p>
-                    <p className="text-sm text-gray-600">Get notified when you receive new cards</p>
+                <div className="flex items-center justify-between p-3 sm:p-4 glass rounded-lg border border-white/20 sm:border-2">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <p className="font-semibold text-gray-800 text-sm sm:text-base">Achievement Alerts</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Get notified when you receive new cards</p>
                   </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
+                  <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                     <input
                       type="checkbox"
                       checked={preferences.achievement_alerts}
@@ -401,10 +401,10 @@ export default function Settings() {
                   </label>
                 </div>
 
-                <div className="flex items-center justify-between p-4 glass rounded-lg border-2 border-white/20">
-                  <div>
-                    <p className="font-semibold text-gray-800">Weekly Summary</p>
-                    <p className="text-sm text-gray-600">Receive weekly activity summaries</p>
+                <div className="flex items-center justify-between p-3 sm:p-4 glass rounded-lg border border-white/20 sm:border-2">
+                  <div className="flex-1 min-w-0 pr-3">
+                    <p className="font-semibold text-gray-800 text-sm sm:text-base">Weekly Summary</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Receive weekly activity summaries</p>
                   </div>
                   <label className="relative inline-flex items-center cursor-pointer">
                     <input
@@ -420,10 +420,10 @@ export default function Settings() {
 
               <button
                 onClick={handleUpdatePreferences}
-                className="w-full py-3 px-6 rounded-lg text-white font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2"
+                className="w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg text-white font-semibold transition-all hover:shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base"
                 style={{backgroundColor: '#003f88'}}
               >
-                <Save size={20} />
+                <Save size={18} className="sm:w-5 sm:h-5" />
                 Save Preferences
               </button>
             </div>
@@ -434,30 +434,30 @@ export default function Settings() {
       {/* QR Code Modal */}
       {showQR && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowQR(false)}>
-          <div className="bg-white rounded-2xl p-8 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-2xl font-bold text-gray-800 mb-4 text-center">Your Student QR Code</h3>
-            <p className="text-sm text-gray-600 text-center mb-6">Show this QR code to admin to receive incentive cards</p>
+          <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-2xl max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-4 text-center">Your Student QR Code</h3>
+            <p className="text-xs sm:text-sm text-gray-600 text-center mb-4 sm:mb-6">Show this QR code to admin to receive incentive cards</p>
             
-            <div className="bg-gray-50 rounded-xl p-6 mb-6 flex justify-center">
-              <img src={qrDataURL} alt="Student QR Code" className="w-full max-w-[300px]" />
+            <div className="bg-gray-50 rounded-xl p-4 sm:p-6 mb-4 sm:mb-6 flex justify-center">
+              <img src={qrDataURL} alt="Student QR Code" className="w-full max-w-[250px] sm:max-w-[300px]" />
             </div>
 
-            <div className="text-center mb-6">
-              <p className="text-lg font-bold text-gray-800">{profile.first_name} {profile.last_name}</p>
-              <p className="text-sm text-gray-600">Student ID: {profile.student_id}</p>
+            <div className="text-center mb-4 sm:mb-6">
+              <p className="text-base sm:text-lg font-bold text-gray-800">{profile.first_name} {profile.last_name}</p>
+              <p className="text-xs sm:text-sm text-gray-600">Student ID: {profile.student_id}</p>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={downloadQR}
-                className="flex-1 py-3 px-4 rounded-xl font-semibold text-white transition-all"
+                className="flex-1 py-2.5 sm:py-3 px-4 rounded-xl font-semibold text-white transition-all text-sm sm:text-base"
                 style={{backgroundColor: '#003f88'}}
               >
                 Download QR
               </button>
               <button
                 onClick={() => setShowQR(false)}
-                className="flex-1 py-3 px-4 bg-gray-200 rounded-xl font-semibold text-gray-800 hover:bg-gray-300 transition-all"
+                className="flex-1 py-2.5 sm:py-3 px-4 bg-gray-200 rounded-xl font-semibold text-gray-800 hover:bg-gray-300 transition-all text-sm sm:text-base"
               >
                 Close
               </button>

@@ -47,104 +47,104 @@ export default function Profile(){
     link.click()
   }
   return (
-    <section className="space-y-6">
-      <div className="glass rounded-2xl p-6 shadow-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 rounded-full" style={{backgroundColor: '#003f88'}}>
-            <User size={32} className="text-white" />
+    <section className="space-y-4 sm:space-y-6 px-4 sm:px-0">
+      <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg sm:shadow-2xl">
+        <div className="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+          <div className="p-1.5 sm:p-2 rounded-full" style={{backgroundColor: '#003f88'}}>
+            <User size={24} className="text-white sm:w-8 sm:h-8" />
           </div>
-          <h2 className="text-3xl font-bold text-gray-800">My Profile</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800">My Profile</h2>
         </div>
         
-        <div className="grid gap-6 md:grid-cols-2">
-          <div className="glass rounded-xl p-6 border-2 border-white/20">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <Info size={20} />
+        <div className="grid gap-4 sm:gap-6 md:grid-cols-2">
+          <div className="glass rounded-lg sm:rounded-xl p-4 sm:p-6 border border-white/20 sm:border-2">
+            <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
+              <Info size={16} className="sm:w-5 sm:h-5" />
               <span>Personal Information</span>
             </h3>
-            <div className="space-y-4">
-              <div className="pb-3 border-b border-gray-200">
-                <label className="text-xs text-gray-500 uppercase tracking-wide">Name</label>
-                <p className="font-semibold text-lg">{profile.name}</p>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="pb-2 sm:pb-3 border-b border-gray-200">
+                <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Name</label>
+                <p className="font-semibold text-base sm:text-lg">{profile.name}</p>
               </div>
-              <div className="pb-3 border-b border-gray-200">
-                <label className="text-xs text-gray-500 uppercase tracking-wide">Student ID</label>
-                <div className="flex items-center justify-between">
-                  <p className="font-semibold">{profile.studentId}</p>
+              <div className="pb-2 sm:pb-3 border-b border-gray-200">
+                <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Student ID</label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+                  <p className="font-semibold text-sm sm:text-base">{profile.studentId}</p>
                   <button
                     onClick={generateQR}
-                    className="px-3 py-1 rounded-lg text-white text-sm font-medium transition-all hover:shadow-lg flex items-center gap-1"
+                    className="w-full sm:w-auto px-3 py-1.5 sm:py-1 rounded-lg text-white text-xs sm:text-sm font-medium transition-all hover:shadow-lg flex items-center justify-center gap-1"
                     style={{backgroundColor: '#003f88'}}
                     onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#002a5c')}
                     onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#003f88')}
                   >
-                    <QrCode size={16} />
+                    <QrCode size={14} className="sm:w-4 sm:h-4" />
                     Generate QR
                   </button>
                 </div>
               </div>
-              <div className="pb-3 border-b border-gray-200">
-                <label className="text-xs text-gray-500 uppercase tracking-wide">Email</label>
-                <p className="font-semibold text-blue-600">{profile.email}</p>
+              <div className="pb-2 sm:pb-3 border-b border-gray-200">
+                <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Email</label>
+                <p className="font-semibold text-sm sm:text-base text-blue-600 break-all">{profile.email}</p>
               </div>
-              <div className="pb-3 border-b border-gray-200">
-                <label className="text-xs text-gray-500 uppercase tracking-wide">Program</label>
-                <p className="font-semibold">{profile.program}</p>
+              <div className="pb-2 sm:pb-3 border-b border-gray-200">
+                <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Program</label>
+                <p className="font-semibold text-sm sm:text-base">{profile.program}</p>
               </div>
               <div>
-                <label className="text-xs text-gray-500 uppercase tracking-wide">Year Level</label>
-                <p className="font-semibold">{profile.yearLevel}</p>
+                <label className="text-[10px] sm:text-xs text-gray-500 uppercase tracking-wide">Year Level</label>
+                <p className="font-semibold text-sm sm:text-base">{profile.yearLevel}</p>
               </div>
             </div>
           </div>
 
-          <div className="glass rounded-xl p-6 border-2 border-white/20">
-            <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-              <BarChart3 size={20} />
+          <div className="glass rounded-lg sm:rounded-xl p-4 sm:p-6 border border-white/20 sm:border-2">
+            <h3 className="font-bold text-base sm:text-lg mb-3 sm:mb-4 flex items-center gap-2">
+              <BarChart3 size={16} className="sm:w-5 sm:h-5" />
               <span>Statistics</span>
             </h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-5 rounded-xl text-white shadow-lg text-center transform transition-transform hover:scale-105" style={{backgroundColor: '#003f88'}}>
-                <p className="text-4xl font-bold">{stats.total}</p>
-                <p className="text-sm mt-1 opacity-90">Total Cards</p>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
+              <div className="p-3 sm:p-4 lg:p-5 rounded-lg sm:rounded-xl text-white shadow-lg text-center transform transition-transform active:scale-95 sm:hover:scale-105" style={{backgroundColor: '#003f88'}}>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold">{stats.total}</p>
+                <p className="text-[10px] sm:text-xs lg:text-sm mt-1 opacity-90">Total Cards</p>
               </div>
-              <div className="p-5 bg-green-600 rounded-xl text-white shadow-lg text-center transform transition-transform hover:scale-105">
-                <p className="text-4xl font-bold">{stats.unused}</p>
-                <p className="text-sm mt-1 opacity-90">Unused</p>
+              <div className="p-3 sm:p-4 lg:p-5 bg-green-600 rounded-lg sm:rounded-xl text-white shadow-lg text-center transform transition-transform active:scale-95 sm:hover:scale-105">
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold">{stats.unused}</p>
+                <p className="text-[10px] sm:text-xs lg:text-sm mt-1 opacity-90">Unused</p>
               </div>
-              <div className="p-5 bg-gray-600 rounded-xl text-white shadow-lg text-center transform transition-transform hover:scale-105">
-                <p className="text-4xl font-bold">{stats.redeemed}</p>
-                <p className="text-sm mt-1 opacity-90">Redeemed</p>
+              <div className="p-3 sm:p-4 lg:p-5 bg-gray-600 rounded-lg sm:rounded-xl text-white shadow-lg text-center transform transition-transform active:scale-95 sm:hover:scale-105">
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold">{stats.redeemed}</p>
+                <p className="text-[10px] sm:text-xs lg:text-sm mt-1 opacity-90">Redeemed</p>
               </div>
-              <div className="p-5 bg-yellow-600 rounded-xl text-white shadow-lg text-center transform transition-transform hover:scale-105">
-                <p className="text-4xl font-bold">{stats.pending}</p>
-                <p className="text-sm mt-1 opacity-90">Pending</p>
+              <div className="p-3 sm:p-4 lg:p-5 bg-yellow-600 rounded-lg sm:rounded-xl text-white shadow-lg text-center transform transition-transform active:scale-95 sm:hover:scale-105">
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold">{stats.pending}</p>
+                <p className="text-[10px] sm:text-xs lg:text-sm mt-1 opacity-90">Pending</p>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="glass rounded-2xl p-6 shadow-2xl">
-        <h3 className="font-bold text-xl mb-4 flex items-center gap-2">
-          <FileText size={22} />
+      <div className="glass rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg sm:shadow-2xl">
+        <h3 className="font-bold text-lg sm:text-xl mb-3 sm:mb-4 flex items-center gap-2">
+          <FileText size={18} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
           <span>Activity History</span>
         </h3>
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {history.map(h => {
             const IconComponent = h.type === 'issued' ? CreditCard : h.type === 'redeemed' ? CheckCircle : Upload
             return (
-              <div key={h.id} className="glass rounded-xl p-4 border-2 border-white/20 hover:shadow-lg transition-all duration-200 hover:scale-102">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-lg" style={{backgroundColor: '#003f88'}}>
-                      <IconComponent size={20} className="text-white" />
+              <div key={h.id} className="glass rounded-lg sm:rounded-xl p-3 sm:p-4 border border-white/20 sm:border-2 transition-all duration-200 active:scale-[0.98] sm:hover:scale-102">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-2 sm:gap-3 flex-1 min-w-0">
+                    <div className="p-1.5 sm:p-2 rounded-lg flex-shrink-0" style={{backgroundColor: '#003f88'}}>
+                      <IconComponent size={16} className="text-white sm:w-5 sm:h-5" />
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-800">{h.action}</p>
-                      <p className="text-sm text-gray-600">{h.event}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-sm sm:text-base text-gray-800 truncate">{h.action}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">{h.event}</p>
                       {h.course && (
-                        <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                        <p className="text-[10px] sm:text-xs text-blue-600 mt-1 flex items-center gap-1">
                           <span>Course: {h.course}</span>
                         </p>
                       )}
