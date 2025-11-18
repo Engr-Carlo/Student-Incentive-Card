@@ -70,9 +70,6 @@ if (isEmailConfigured) {
   console.log('📧 Email not configured - running in CONSOLE MODE (codes will appear in terminal)')
 }
 
-// In-memory storage for verification codes (use Redis in production)
-const verificationCodes = new Map()
-
 // Database connection
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL
