@@ -89,17 +89,31 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // Middleware
 const corsOptions = {
-  origin: [
-    'https://incentive-card-student.vercel.app',
-    'https://incentive-card-admin.vercel.app',
-    'http://localhost:5173',
-    'http://localhost:5174'
-  ],
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://incentive-card-student.vercel.app',
+      'https://incentive-card-admin.vercel.app',
+      'http://localhost:5173',
+      'http://localhost:5174'
+    ]
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(null, true) // Allow all origins for now
+    }
+  },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
 }
 
 app.use(cors(corsOptions))
+
+// Handle preflight requests
+app.options('*', cors(corsOptions))
+
 app.use(express.json())
 
 // Authentication middleware for students
