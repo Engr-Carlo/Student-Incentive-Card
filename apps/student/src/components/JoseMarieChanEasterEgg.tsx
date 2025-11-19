@@ -7,7 +7,7 @@ export function JoseMarieChanEasterEgg() {
   useEffect(() => {
     // Generate random number from 1 to 100
     const randomNum = Math.floor(Math.random() * 100) + 1
-    console.log('🎄 Jose Marie Chan roll:', randomNum)
+    console.log('Jose Marie Chan roll:', randomNum)
 
     // Show if 51-100 (50% chance)
     if (randomNum >= 51) {
@@ -16,7 +16,7 @@ export function JoseMarieChanEasterEgg() {
         setShow(true)
         setAnimationState('peeking')
 
-        // Start retreating after 3 seconds
+        // Start retreating after 4 seconds
         setTimeout(() => {
           setAnimationState('retreating')
 
@@ -24,8 +24,8 @@ export function JoseMarieChanEasterEgg() {
           setTimeout(() => {
             setShow(false)
             setAnimationState('hidden')
-          }, 2000)
-        }, 3000)
+          }, 4000)
+        }, 4000)
       }, 1000) // Initial delay of 1 second
     }
   }, [])
@@ -36,19 +36,14 @@ export function JoseMarieChanEasterEgg() {
     <div className="fixed bottom-0 left-0 z-50 pointer-events-none">
       <img
         src="/images/jose-marie-chan.png"
-        alt="Jose Marie Chan"
-        className={`h-64 w-auto transition-transform duration-[2000ms] ease-in-out ${
+        alt=""
+        className={`h-64 w-auto transition-transform duration-[4000ms] ease-in-out ${
           animationState === 'peeking' ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{
-          filter: 'drop-shadow(4px 4px 8px rgba(0,0,0,0.3))',
+          mixBlendMode: 'normal',
         }}
       />
-      {animationState === 'peeking' && (
-        <div className="absolute top-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg animate-bounce">
-          <p className="text-sm font-bold">🎄 It's Christmas time! 🎅</p>
-        </div>
-      )}
     </div>
   )
 }
