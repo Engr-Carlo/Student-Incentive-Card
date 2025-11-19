@@ -110,8 +110,33 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 
-// Handle preflight requests
-app.options('*', cors(corsOptions))
+// Add CORS headers to all responses BEFORE anything else
+app.use((req, res, next) => {
+  const origin = req.headers.origin
+  const allowedOrigins = [
+    'https://incentive-card-student.vercel.app',
+    'https://incentive-card-admin.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:5174'
+  ]
+  
+  if (origin && allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin)
+  } else {
+    res.header('Access-Control-Allow-Origin', '*')
+  }
+  
+  res.header('Access-Control-Allow-Credentials', 'true')
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization')
+  res.header('Access-Control-Max-Age', '86400')
+  
+  // Handle preflight
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end()
+  }
+  next()
+})
 
 app.use(express.json())
 
@@ -1354,3 +1379,6 @@ app.get('/api/stats', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`)
 })
+
+// Export for Vercel
+export default app
