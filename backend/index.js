@@ -379,7 +379,12 @@ app.post('/api/auth/login', async (req, res) => {
 // Student forgot password
 app.post('/api/students/forgot-password', async (req, res) => {
   try {
+    console.log('Forgot password request received for email:', req.body.email)
     const { email } = req.body
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' })
+    }
 
     // Find student by email
     const result = await pool.query(
@@ -387,28 +392,37 @@ app.post('/api/students/forgot-password', async (req, res) => {
       [email]
     )
 
+    console.log('Student lookup result:', result.rows.length > 0 ? 'Found' : 'Not found')
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'No account found with this email address' })
     }
 
     const student = result.rows[0]
 
-    if (!isEmailConfigured) {
+    console.log('Email configured:', isEmailConfigured)
+    console.log('Transporter exists:', !!transporter)
+
+    if (!isEmailConfigured || !transporter) {
       return res.status(503).json({ error: 'Email service not configured. Please contact administrator.' })
     }
 
     // Generate unique reset token
     const resetToken = crypto.randomBytes(32).toString('hex')
+    console.log('Generated reset token')
     
     // Store token in database with current timestamp
     await pool.query(
       'UPDATE students SET reset_token = $1, reset_token_created_at = NOW() WHERE email = $2',
       [resetToken, student.email]
     )
+    console.log('Token stored in database')
 
     // Build reset link based on environment
     const studentAppUrl = process.env.STUDENT_APP_URL || 'https://incentive-card-student.vercel.app'
     const resetLink = `${studentAppUrl}/reset-password?token=${resetToken}`
+
+    console.log('Sending email to:', email)
 
     // Send reset email
     const mailOptions = {
@@ -469,10 +483,12 @@ app.post('/api/students/forgot-password', async (req, res) => {
     }
 
     await transporter.sendMail(mailOptions)
+    console.log('Email sent successfully')
 
     res.json({ message: 'Password reset link has been sent to your email address' })
   } catch (error) {
     console.error('Forgot password error:', error)
+    console.error('Error stack:', error.stack)
     res.status(500).json({ error: 'Failed to send password reset email' })
   }
 })
