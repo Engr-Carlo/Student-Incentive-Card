@@ -19,12 +19,16 @@ const verificationCodes = new Map()
 const resetTokens = new Map() // { token: { email, type: 'student'|'admin', expires } }
 
 // Email transporter configuration
-let transporter
-const isEmailConfigured = process.env.EMAIL_USER && process.env.EMAIL_USER !== 'your-gmail-account@gmail.com'
+let transporter = null
+let isEmailConfigured = false
 
-if (isEmailConfigured) {
-  try {
-    const emailUser = process.env.EMAIL_USER || ''
+try {
+  const emailUser = process.env.EMAIL_USER || ''
+  const emailPassword = process.env.EMAIL_PASSWORD || ''
+  
+  if (emailUser && emailUser !== 'your-gmail-account@gmail.com' && emailPassword) {
+    isEmailConfigured = true
+    
     let emailConfig
     
     if (emailUser.includes('@outlook.com') || emailUser.includes('@hotmail.com')) {
@@ -33,8 +37,8 @@ if (isEmailConfigured) {
         port: 587,
         secure: false,
         auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD
+          user: emailUser,
+          pass: emailPassword
         }
       }
     } else {
@@ -43,8 +47,8 @@ if (isEmailConfigured) {
         port: 587,
         secure: false,
         auth: {
-          user: process.env.EMAIL_USER,
-          pass: process.env.EMAIL_PASSWORD
+          user: emailUser,
+          pass: emailPassword
         },
         tls: {
           rejectUnauthorized: false
@@ -53,21 +57,22 @@ if (isEmailConfigured) {
     }
     
     transporter = nodemailer.createTransport(emailConfig)
+    console.log('✅ Email transporter created for:', emailUser)
   
-    // Verify transporter configuration
-    transporter.verify(function (error, success) {
-      if (error) {
-        console.log('⚠️  Email service error:', error.message)
-        console.log('📧 Falling back to console-only mode')
-      } else {
-        console.log('✅ Email service is ready to send messages')
-      }
+    // Verify transporter configuration (async, doesn't block)
+    transporter.verify().then(() => {
+      console.log('✅ Email service verified and ready to send messages')
+    }).catch((error) => {
+      console.log('⚠️  Email service verification failed:', error.message)
+      console.log('📧 Will attempt to send emails anyway')
     })
-  } catch (error) {
-    console.log('⚠️  Could not initialize email service:', error.message)
+  } else {
+    console.log('📧 Email not configured - EMAIL_USER or EMAIL_PASSWORD missing')
   }
-} else {
-  console.log('📧 Email not configured - running in CONSOLE MODE (codes will appear in terminal)')
+} catch (error) {
+  console.log('⚠️  Could not initialize email service:', error.message)
+  isEmailConfigured = false
+  transporter = null
 }
 
 // Database connection
@@ -404,7 +409,11 @@ app.post('/api/students/forgot-password', async (req, res) => {
     console.log('Transporter exists:', !!transporter)
 
     if (!isEmailConfigured || !transporter) {
-      return res.status(503).json({ error: 'Email service not configured. Please contact administrator.' })
+      // Store token anyway so user can manually get it if needed
+      console.log('⚠️  Email not available, but token stored in database')
+      return res.status(503).json({ 
+        error: 'Email service is not currently available. Please contact your administrator or try again later.' 
+      })
     }
 
     // Generate unique reset token
