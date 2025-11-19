@@ -15,7 +15,7 @@ export default function App(){
 
   const handleLogout = () => {
     adminStore.logout()
-    navigate('/login')
+    navigate('/')
   }
   
   const resetInactivityTimer = () => {

@@ -41,7 +41,7 @@ export default function App() {
     localStorage.removeItem('student_id')
     localStorage.removeItem('student_name')
     localStorage.removeItem('student_email')
-    navigate('/login')
+    navigate('/')
   }
   
   const resetInactivityTimer = () => {
