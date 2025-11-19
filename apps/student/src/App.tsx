@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, CreditCard, User, Settings, LogOut } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { JoseMarieChanEasterEgg } from './components/JoseMarieChanEasterEgg'
 
 function Logo() {
   return (
@@ -26,8 +27,14 @@ export default function App() {
   const navigate = useNavigate()
   const studentName = localStorage.getItem('student_name') || 'Student'
   const inactivityTimerRef = useRef<number | null>(null)
+  const [showEasterEgg, setShowEasterEgg] = useState(false)
   
   const INACTIVITY_TIMEOUT = 30 * 60 * 1000 // 30 minutes in milliseconds
+  
+  // Trigger Easter egg on mount (when user logs in)
+  useEffect(() => {
+    setShowEasterEgg(true)
+  }, [])
   
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
@@ -91,6 +98,7 @@ export default function App() {
   )
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 overflow-x-hidden">
+      {showEasterEgg && <JoseMarieChanEasterEgg />}
       <header className="shadow-lg sticky top-0 z-50 w-full" style={{backgroundColor: '#003f88'}}>
         <div className="max-w-7xl mx-auto px-4 py-4 w-full">
           <div className="flex items-center justify-between">
