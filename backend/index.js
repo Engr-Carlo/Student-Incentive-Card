@@ -400,12 +400,11 @@ app.post('/api/students/forgot-password', async (req, res) => {
     // Generate unique reset token
     const resetToken = crypto.randomBytes(32).toString('hex')
     
-    // Store token with 1-hour expiration
-    resetTokens.set(resetToken, {
-      email: student.email,
-      type: 'student',
-      expires: Date.now() + 60 * 60 * 1000 // 1 hour
-    })
+    // Store token in database with current timestamp
+    await pool.query(
+      'UPDATE students SET reset_token = $1, reset_token_created_at = NOW() WHERE email = $2',
+      [resetToken, student.email]
+    )
 
     // Build reset link based on environment
     const studentAppUrl = process.env.STUDENT_APP_URL || 'https://incentive-card-student.vercel.app'
@@ -486,20 +485,41 @@ app.post('/api/students/reset-password', async (req, res) => {
     console.log('Token received:', token ? 'Yes' : 'No')
     console.log('New password received:', newPassword ? 'Yes' : 'No')
 
-    // Validate token
-    const tokenData = resetTokens.get(token)
-    console.log('Token data found:', tokenData ? 'Yes' : 'No')
+    if (!token) {
+      return res.status(400).json({ error: 'Reset token is required' })
+    }
+
+    // Find student with this reset token
+    const studentResult = await pool.query(
+      'SELECT * FROM students WHERE reset_token = $1',
+      [token]
+    )
     
-    if (!tokenData || tokenData.type !== 'student') {
-      console.log('Invalid token or wrong type')
+    console.log('Student found:', studentResult.rows.length > 0 ? 'Yes' : 'No')
+    
+    if (studentResult.rows.length === 0) {
+      console.log('Invalid token - no student found')
       return res.status(400).json({ error: 'Invalid or expired reset token' })
     }
 
-    // Check if token expired
-    if (Date.now() > tokenData.expires) {
+    const student = studentResult.rows[0]
+
+    // Check if token expired (1 hour = 3600000 ms)
+    const tokenCreatedAt = new Date(student.reset_token_created_at).getTime()
+    const now = Date.now()
+    const tokenAge = now - tokenCreatedAt
+    
+    console.log('Token age (ms):', tokenAge)
+    console.log('Token expired:', tokenAge > 3600000)
+    
+    if (tokenAge > 3600000) {
       console.log('Token expired')
-      resetTokens.delete(token)
-      return res.status(400).json({ error: 'Reset token has expired' })
+      // Clear expired token
+      await pool.query(
+        'UPDATE students SET reset_token = NULL, reset_token_created_at = NULL WHERE email = $1',
+        [student.email]
+      )
+      return res.status(400).json({ error: 'Reset token has expired. Please request a new password reset.' })
     }
 
     // Validate new password
@@ -512,15 +532,13 @@ app.post('/api/students/reset-password', async (req, res) => {
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 10)
 
-    console.log('Updating database for email:', tokenData.email)
-    // Update student password
+    console.log('Updating password for student:', student.email)
+    // Update student password and clear reset token
     await pool.query(
-      'UPDATE students SET password_hash = $1, password = $2 WHERE email = $3',
-      [hashedPassword, newPassword, tokenData.email]
+      'UPDATE students SET password_hash = $1, reset_token = NULL, reset_token_created_at = NULL WHERE email = $2',
+      [hashedPassword, student.email]
     )
 
-    // Delete used token
-    resetTokens.delete(token)
     console.log('Password reset successful')
 
     res.json({ message: 'Password has been reset successfully' })
