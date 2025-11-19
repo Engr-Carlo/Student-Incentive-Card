@@ -590,33 +590,53 @@ app.post('/api/students/reset-password', async (req, res) => {
     console.log('Reset password request received')
     const { token, newPassword } = req.body
     console.log('Token received:', token ? 'Yes' : 'No')
+    console.log('Token value:', token)
+    console.log('Token length:', token ? token.length : 0)
     console.log('New password received:', newPassword ? 'Yes' : 'No')
 
     if (!token) {
       return res.status(400).json({ error: 'Reset token is required' })
     }
 
+    // Trim the token in case there are extra spaces
+    const cleanToken = token.trim()
+    console.log('Clean token length:', cleanToken.length)
+
     // Find student with this reset token
     const studentResult = await pool.query(
       'SELECT * FROM students WHERE reset_token = $1',
-      [token]
+      [cleanToken]
     )
     
-    console.log('Student found:', studentResult.rows.length > 0 ? 'Yes' : 'No')
+    console.log('Query executed')
+    console.log('Students found:', studentResult.rows.length)
     
     if (studentResult.rows.length === 0) {
-      console.log('Invalid token - no student found')
+      console.log('Invalid token - no student found with token:', cleanToken.substring(0, 10) + '...')
+      
+      // Debug: Check if ANY student has a reset token
+      const anyTokens = await pool.query(
+        'SELECT email, LENGTH(reset_token) as token_length, reset_token_created_at FROM students WHERE reset_token IS NOT NULL'
+      )
+      console.log('Students with active tokens:', anyTokens.rows.length)
+      if (anyTokens.rows.length > 0) {
+        console.log('Active token info:', anyTokens.rows)
+      }
+      
       return res.status(400).json({ error: 'Invalid or expired reset token' })
     }
 
     const student = studentResult.rows[0]
+    console.log('Found student:', student.email)
 
     // Check if token expired (1 hour = 3600000 ms)
     const tokenCreatedAt = new Date(student.reset_token_created_at).getTime()
     const now = Date.now()
     const tokenAge = now - tokenCreatedAt
     
+    console.log('Token created at:', student.reset_token_created_at)
     console.log('Token age (ms):', tokenAge)
+    console.log('Token age (minutes):', Math.floor(tokenAge / 60000))
     console.log('Token expired:', tokenAge > 3600000)
     
     if (tokenAge > 3600000) {
