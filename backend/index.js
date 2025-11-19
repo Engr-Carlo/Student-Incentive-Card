@@ -196,6 +196,35 @@ const requireSuperAdmin = (req, res, next) => {
   next()
 }
 
+// ============ HEALTH CHECK & ROOT ENDPOINTS ============
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Student Incentive Card API',
+    status: 'running',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth/*',
+      students: '/api/students/*',
+      admin: '/api/admin/*',
+      cards: '/api/cards/*',
+      packages: '/api/packages/*',
+      stats: '/api/stats'
+    }
+  })
+})
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy', 
+    timestamp: new Date().toISOString(),
+    database: 'connected',
+    email: isEmailConfigured ? 'configured' : 'not configured'
+  })
+})
+
 // ============ STUDENT AUTHENTICATION ENDPOINTS ============
 
 // Send verification code to email
