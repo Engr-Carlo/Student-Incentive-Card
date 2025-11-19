@@ -80,12 +80,36 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL
 })
 
-// Test database connection
-pool.query('SELECT NOW()', (err, res) => {
+// Test database connection and ensure reset_token columns exist
+pool.query('SELECT NOW()', async (err, res) => {
   if (err) {
     console.error('❌ Database connection error:', err)
   } else {
     console.log('✅ Database connected successfully')
+    
+    // Auto-migrate: Add reset_token columns if they don't exist
+    try {
+      await pool.query(`
+        DO $$ 
+        BEGIN
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                           WHERE table_name='students' AND column_name='reset_token') THEN
+                ALTER TABLE students ADD COLUMN reset_token VARCHAR(255);
+                CREATE INDEX idx_students_reset_token ON students(reset_token);
+                RAISE NOTICE 'Added reset_token column';
+            END IF;
+            
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                           WHERE table_name='students' AND column_name='reset_token_created_at') THEN
+                ALTER TABLE students ADD COLUMN reset_token_created_at TIMESTAMP;
+                RAISE NOTICE 'Added reset_token_created_at column';
+            END IF;
+        END $$;
+      `)
+      console.log('✅ Database schema verified/updated')
+    } catch (error) {
+      console.error('⚠️  Schema update warning:', error.message)
+    }
   }
 })
 
