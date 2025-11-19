@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, CreditCard, User, Settings, LogOut } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 
 function Logo() {
   return (
@@ -24,6 +25,9 @@ export default function App() {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const studentName = localStorage.getItem('student_name') || 'Student'
+  const inactivityTimerRef = useRef<number | null>(null)
+  
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000 // 30 minutes in milliseconds
   
   const handleLogout = () => {
     localStorage.removeItem('auth_token')
@@ -32,6 +36,42 @@ export default function App() {
     localStorage.removeItem('student_email')
     navigate('/login')
   }
+  
+  const resetInactivityTimer = () => {
+    // Clear existing timer
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current)
+    }
+    
+    // Set new timer
+    inactivityTimerRef.current = window.setTimeout(() => {
+      console.log('User inactive for 30 minutes, logging out...')
+      handleLogout()
+    }, INACTIVITY_TIMEOUT)
+  }
+  
+  useEffect(() => {
+    // Events that indicate user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+    
+    // Reset timer on any user activity
+    events.forEach(event => {
+      document.addEventListener(event, resetInactivityTimer)
+    })
+    
+    // Initialize the timer
+    resetInactivityTimer()
+    
+    // Cleanup
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, resetInactivityTimer)
+      })
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current)
+      }
+    }
+  }, [])
   
   const link = (to: string, label: string, icon: React.ReactNode) => (
     <Link 

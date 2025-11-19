@@ -1,7 +1,7 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { LayoutDashboard, QrCode, CreditCard, Package, Users, LogOut, Database, Menu, X } from 'lucide-react'
 import { adminStore } from '../lib/api'
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 export default function App(){
   const { pathname } = useLocation()
@@ -9,11 +9,50 @@ export default function App(){
   const admin = adminStore.getCurrentAdmin()
   const isSuperAdmin = adminStore.isSuperAdmin()
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const inactivityTimerRef = useRef<number | null>(null)
+  
+  const INACTIVITY_TIMEOUT = 30 * 60 * 1000 // 30 minutes in milliseconds
 
   const handleLogout = () => {
     adminStore.logout()
     navigate('/login')
   }
+  
+  const resetInactivityTimer = () => {
+    // Clear existing timer
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current)
+    }
+    
+    // Set new timer
+    inactivityTimerRef.current = window.setTimeout(() => {
+      console.log('Admin inactive for 30 minutes, logging out...')
+      handleLogout()
+    }, INACTIVITY_TIMEOUT)
+  }
+  
+  useEffect(() => {
+    // Events that indicate user activity
+    const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click']
+    
+    // Reset timer on any user activity
+    events.forEach(event => {
+      document.addEventListener(event, resetInactivityTimer)
+    })
+    
+    // Initialize the timer
+    resetInactivityTimer()
+    
+    // Cleanup
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, resetInactivityTimer)
+      })
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current)
+      }
+    }
+  }, [])
 
   const navLink = (to: string, label: string, icon: React.ReactNode, requireSuperAdmin = false) => {
     if (requireSuperAdmin && !isSuperAdmin) return null
