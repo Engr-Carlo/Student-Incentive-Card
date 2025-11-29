@@ -255,6 +255,7 @@ app.get('/health', (req, res) => {
 app.post('/api/auth/send-verification', async (req, res) => {
   try {
     const { email } = req.body
+    console.log('Send verification request for:', email)
 
     // Validate email format
     if (!email || !email.includes('@')) {
@@ -270,29 +271,38 @@ app.post('/api/auth/send-verification', async (req, res) => {
       expires: Date.now() + 10 * 60 * 1000 // 10 minutes
     })
 
-    // Send email
-    const mailOptions = {
-      from: process.env.EMAIL_USER || 'noreply@incentivecard.com',
-      to: email,
-      subject: 'Email Verification - Incentive Card System',
-      text: `Your verification code is: ${code}. This code will expire in 10 minutes.`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #003f88;">Email Verification</h2>
-          <p>Your verification code is:</p>
-          <div style="background: #f0f0f0; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
-            ${code}
-          </div>
-          <p>This code will expire in 10 minutes.</p>
-          <p style="color: #666; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
-        </div>
-      `
-    }
+    console.log('Email configured:', isEmailConfigured)
+    console.log('Transporter exists:', !!transporter)
 
     // Send email or log to console if not configured
     if (isEmailConfigured && transporter) {
-      await transporter.sendMail(mailOptions)
-      console.log(`✅ Verification code sent to ${email}`)
+      const mailOptions = {
+        from: process.env.EMAIL_USER || 'noreply@incentivecard.com',
+        to: email,
+        subject: 'Email Verification - Incentive Card System',
+        text: `Your verification code is: ${code}. This code will expire in 10 minutes.`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #003f88;">Email Verification</h2>
+            <p>Your verification code is:</p>
+            <div style="background: #f0f0f0; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; letter-spacing: 5px; margin: 20px 0;">
+              ${code}
+            </div>
+            <p>This code will expire in 10 minutes.</p>
+            <p style="color: #666; font-size: 12px;">If you didn't request this code, please ignore this email.</p>
+          </div>
+        `
+      }
+
+      try {
+        await transporter.sendMail(mailOptions)
+        console.log(`✅ Verification code sent to ${email}`)
+      } catch (emailError) {
+        console.error('Email sending failed:', emailError)
+        console.error('Email error message:', emailError.message)
+        // Still return success since code is stored in memory
+        console.log('Code stored in memory for manual entry:', code)
+      }
     } else {
       console.log('\n' + '='.repeat(50))
       console.log('📧 EMAIL VERIFICATION CODE')
@@ -306,6 +316,7 @@ app.post('/api/auth/send-verification', async (req, res) => {
     res.json({ message: 'Verification code sent successfully' })
   } catch (error) {
     console.error('Send verification error:', error)
+    console.error('Error stack:', error.stack)
     res.status(500).json({ error: 'Failed to send verification code' })
   }
 })
