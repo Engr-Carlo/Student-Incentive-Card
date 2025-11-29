@@ -1189,6 +1189,46 @@ app.post('/api/cards/:cardId/redeem', authenticateStudent, async (req, res) => {
   }
 })
 
+// Get card details by ID (Admin - for verification)
+app.get('/api/cards/:cardId', authenticateAdmin, async (req, res) => {
+  try {
+    const { cardId } = req.params
+    
+    console.log('Admin fetching card details for ID:', cardId)
+
+    // Get card with all details including student info
+    const result = await pool.query(`
+      SELECT 
+        c.*,
+        p.name as package_name,
+        p.tier,
+        p.benefits,
+        p.event_type,
+        p.competition_level,
+        s.first_name as student_first_name,
+        s.last_name as student_last_name,
+        s.email as student_email,
+        s.program as student_program,
+        s.year_level as student_year_level
+      FROM cards c
+      LEFT JOIN packages p ON c.package_id = p.id
+      LEFT JOIN students s ON c.student_id = s.student_id
+      WHERE c.id = $1
+    `, [cardId])
+
+    if (result.rows.length === 0) {
+      console.log('Card not found:', cardId)
+      return res.status(404).json({ error: 'Card not found' })
+    }
+
+    console.log('Card found:', result.rows[0])
+    res.json(result.rows[0])
+  } catch (error) {
+    console.error('Error fetching card details:', error)
+    res.status(500).json({ error: 'Failed to fetch card details' })
+  }
+})
+
 // Redeem a card (Admin - via QR scan)
 app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) => {
   try {
