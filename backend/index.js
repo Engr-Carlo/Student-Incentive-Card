@@ -104,8 +104,25 @@ pool.query('SELECT NOW()', async (err, res) => {
                 ALTER TABLE students ADD COLUMN reset_token_created_at TIMESTAMP;
                 RAISE NOTICE 'Added reset_token_created_at column';
             END IF;
+            
+            -- Add benefit tracking columns
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                           WHERE table_name='cards' AND column_name='redeemed_benefits') THEN
+                ALTER TABLE cards ADD COLUMN redeemed_benefits TEXT[] DEFAULT '{}';
+                RAISE NOTICE 'Added redeemed_benefits column';
+            END IF;
+            
+            IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                           WHERE table_name='cards' AND column_name='all_benefits_used') THEN
+                ALTER TABLE cards ADD COLUMN all_benefits_used BOOLEAN DEFAULT FALSE;
+                RAISE NOTICE 'Added all_benefits_used column';
+            END IF;
         END $$;
       `)
+      
+      // Update existing cards
+      await pool.query(`UPDATE cards SET redeemed_benefits = '{}' WHERE redeemed_benefits IS NULL`)
+      
       console.log('✅ Database schema verified/updated')
     } catch (error) {
       console.error('⚠️  Schema update warning:', error.message)
@@ -1233,10 +1250,14 @@ app.get('/api/cards/:cardId', authenticateAdmin, async (req, res) => {
 app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) => {
   try {
     const { cardId } = req.params
+    const { selectedBenefits } = req.body // Array of benefit names to redeem
+
+    console.log('Redeem request - Card ID:', cardId)
+    console.log('Selected benefits:', selectedBenefits)
 
     // Check if card exists
     const cardCheck = await pool.query(
-      'SELECT * FROM cards WHERE id = $1',
+      'SELECT c.*, p.benefits FROM cards c LEFT JOIN packages p ON c.package_id = p.id WHERE c.id = $1',
       [cardId]
     )
 
@@ -1245,23 +1266,59 @@ app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) 
     }
 
     const card = cardCheck.rows[0]
+    
+    // Parse benefits if it's a string
+    const allBenefits = typeof card.benefits === 'string' 
+      ? card.benefits.split(',').map(b => b.trim())
+      : card.benefits || []
+    
+    const redeemedBenefits = card.redeemed_benefits || []
+    
+    console.log('All benefits:', allBenefits)
+    console.log('Already redeemed:', redeemedBenefits)
 
-    if (card.status === 'Redeemed') {
-      return res.status(400).json({ error: 'Card already redeemed' })
+    // Validate selected benefits
+    if (!selectedBenefits || !Array.isArray(selectedBenefits) || selectedBenefits.length === 0) {
+      return res.status(400).json({ error: 'Please select at least one benefit to redeem' })
     }
 
-    // Update card status to Redeemed
+    // Check if benefits are valid and not already redeemed
+    for (const benefit of selectedBenefits) {
+      if (!allBenefits.includes(benefit)) {
+        return res.status(400).json({ error: `Invalid benefit: ${benefit}` })
+      }
+      if (redeemedBenefits.includes(benefit)) {
+        return res.status(400).json({ error: `Benefit already redeemed: ${benefit}` })
+      }
+    }
+
+    // Add selected benefits to redeemed list
+    const updatedRedeemedBenefits = [...redeemedBenefits, ...selectedBenefits]
+    
+    // Check if all benefits are now redeemed
+    const allBenefitsUsed = allBenefits.every(b => updatedRedeemedBenefits.includes(b))
+    
+    console.log('Updated redeemed benefits:', updatedRedeemedBenefits)
+    console.log('All benefits used:', allBenefitsUsed)
+
+    // Update card
     const result = await pool.query(
       `UPDATE cards 
-       SET status = 'Redeemed', redeemed_date = CURRENT_DATE 
-       WHERE id = $1 
+       SET redeemed_benefits = $1,
+           all_benefits_used = $2,
+           status = CASE WHEN $2 = true THEN 'Redeemed' ELSE status END,
+           redeemed_date = CASE WHEN $2 = true AND redeemed_date IS NULL THEN CURRENT_DATE ELSE redeemed_date END
+       WHERE id = $3 
        RETURNING *`,
-      [cardId]
+      [updatedRedeemedBenefits, allBenefitsUsed, cardId]
     )
 
     res.json({ 
-      message: 'Card redeemed successfully by admin',
-      card: result.rows[0]
+      message: `Successfully redeemed ${selectedBenefits.length} benefit(s)`,
+      card: result.rows[0],
+      redeemedBenefits: selectedBenefits,
+      remainingBenefits: allBenefits.filter(b => !updatedRedeemedBenefits.includes(b)),
+      allBenefitsUsed
     })
   } catch (error) {
     console.error('Error redeeming card (admin):', error)

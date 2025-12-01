@@ -16,6 +16,8 @@ export default function ScanVerify(){
   const [redeeming, setRedeeming] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [selectedBenefits, setSelectedBenefits] = useState<string[]>([])
+  const [availableBenefits, setAvailableBenefits] = useState<string[]>([])
 
   useEffect(()=>{
     const codeReader = new BrowserMultiFormatReader()
@@ -47,6 +49,7 @@ export default function ScanVerify(){
     if(!result) return
     setStatus('Verifying...')
     setError('')
+    setSelectedBenefits([])
     
     try {
       // Extract card ID from QR code (format: CARD_123)
@@ -64,7 +67,17 @@ export default function ScanVerify(){
       
       const data = await resp.json()
       setCardData(data)
-      setStatus(data.status === 'Unused' ? 'Valid - Ready to Redeem' : 'Already Redeemed')
+      
+      // Parse benefits and calculate available ones
+      const allBenefits = typeof data.benefits === 'string' 
+        ? data.benefits.split(',').map((b: string) => b.trim())
+        : data.benefits || []
+      
+      const redeemedBenefits = data.redeemed_benefits || []
+      const available = allBenefits.filter((b: string) => !redeemedBenefits.includes(b))
+      
+      setAvailableBenefits(available)
+      setStatus(available.length > 0 ? `${available.length} benefit(s) available` : 'All benefits used')
     } catch (err: any) {
       setError(err.message || 'Failed to verify card')
       setStatus('Verification failed')
@@ -72,8 +85,21 @@ export default function ScanVerify(){
     }
   }
 
+  const toggleBenefit = (benefit: string) => {
+    setSelectedBenefits(prev => 
+      prev.includes(benefit) 
+        ? prev.filter(b => b !== benefit)
+        : [...prev, benefit]
+    )
+  }
+
   const redeemCard = async () => {
-    if (!cardData || cardData.status !== 'Unused') return
+    if (!cardData || availableBenefits.length === 0) return
+    
+    if (selectedBenefits.length === 0) {
+      setError('Please select at least one benefit to redeem')
+      return
+    }
     
     setRedeeming(true)
     setError('')
@@ -86,7 +112,8 @@ export default function ScanVerify(){
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({ selectedBenefits })
       })
       
       if (!resp.ok) {
@@ -94,7 +121,10 @@ export default function ScanVerify(){
         throw new Error(data.error || 'Failed to redeem card')
       }
       
-      setSuccess('Card redeemed successfully!')
+      const data = await resp.json()
+      setSuccess(data.message || 'Benefits redeemed successfully!')
+      setSelectedBenefits([])
+      
       // Refresh card data
       await verify()
     } catch (err: any) {
@@ -110,6 +140,8 @@ export default function ScanVerify(){
     setStatus('Idle')
     setError('')
     setSuccess('')
+    setSelectedBenefits([])
+    setAvailableBenefits([])
   }
 
   return (
@@ -251,9 +283,46 @@ export default function ScanVerify(){
                       )}
 
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Benefits</p>
+                        <p className="text-xs text-gray-500 mb-2">All Benefits</p>
                         <p className="text-sm text-gray-700">{cardData.benefits}</p>
                       </div>
+
+                      {cardData.redeemed_benefits && cardData.redeemed_benefits.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-2">Already Redeemed</p>
+                          <div className="space-y-1">
+                            {cardData.redeemed_benefits.map((benefit: string, idx: number) => (
+                              <div key={idx} className="flex items-center gap-2 text-sm text-red-600">
+                                <XCircle size={14} />
+                                <span className="line-through">{benefit}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {availableBenefits.length > 0 && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-2">Available Benefits - Select to Redeem</p>
+                          <div className="space-y-2">
+                            {availableBenefits.map((benefit: string, idx: number) => (
+                              <label key={idx} className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer border border-gray-200">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedBenefits.includes(benefit)}
+                                  onChange={() => toggleBenefit(benefit)}
+                                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
+                                />
+                                <span className="text-sm text-gray-700 flex-1">{benefit}</span>
+                                <CheckCircle 
+                                  size={16} 
+                                  className={selectedBenefits.includes(benefit) ? 'text-green-600' : 'text-gray-300'}
+                                />
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       <div className="pt-3 border-t border-gray-200">
                         <p className="text-xs text-gray-500 mb-2">Student Information</p>
@@ -266,15 +335,21 @@ export default function ScanVerify(){
                     </div>
                   </div>
 
-                  {cardData.status === 'Unused' && (
+                  {availableBenefits.length > 0 && (
                     <button
                       onClick={redeemCard}
-                      disabled={redeeming}
+                      disabled={redeeming || selectedBenefits.length === 0}
                       className="w-full py-3 px-4 bg-green-600 text-white rounded-xl hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed font-semibold transition-colors flex items-center justify-center gap-2"
                     >
                       <Gift size={20} />
-                      {redeeming ? 'Redeeming...' : 'Redeem This Card'}
+                      {redeeming ? 'Redeeming...' : `Redeem Selected (${selectedBenefits.length})`}
                     </button>
+                  )}
+
+                  {availableBenefits.length === 0 && cardData.redeemed_benefits && cardData.redeemed_benefits.length > 0 && (
+                    <div className="w-full py-3 px-4 bg-gray-100 text-gray-600 rounded-xl font-semibold text-center">
+                      All Benefits Used
+                    </div>
                   )}
 
                   <button 
