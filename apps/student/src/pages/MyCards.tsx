@@ -195,14 +195,31 @@ export default function MyCards(){
                 <p className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2 uppercase tracking-wide">
                   <Gift size={16} className="text-indigo-500" />
                   Benefits
+                  {card.redeemed_benefits && card.redeemed_benefits.length > 0 && (
+                    <span className="ml-auto text-xs font-semibold text-indigo-600 bg-indigo-100 px-2 py-1 rounded-full">
+                      {card.benefits.length - card.redeemed_benefits.length}/{card.benefits.length} left
+                    </span>
+                  )}
                 </p>
                 <ul className="space-y-2">
-                  {card.benefits.map((b, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <CheckCircle size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 font-medium">{b}</span>
-                    </li>
-                  ))}
+                  {card.benefits.map((b, i) => {
+                    const isRedeemed = card.redeemed_benefits && card.redeemed_benefits.includes(b)
+                    return (
+                      <li key={i} className={`flex items-start gap-2 text-sm ${isRedeemed ? 'opacity-50' : ''}`}>
+                        {isRedeemed ? (
+                          <>
+                            <XCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-500 font-medium line-through">{b}</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle size={16} className="text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-700 font-medium">{b}</span>
+                          </>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
               </div>
 
