@@ -8,7 +8,6 @@ import Dashboard from './pages/Dashboard'
 import ScanVerify from './pages/ScanVerify'
 import CreatePackage from './pages/CreatePackage'
 import IssueIncentiveCard from './pages/IssueIncentiveCard'
-import PendingRedemptions from './pages/PendingRedemptions'
 import { Login } from './pages/Login'
 import { ManageAdmins } from './pages/ManageAdmins'
 import { ViewData } from './pages/ViewData'
@@ -44,7 +43,6 @@ createRoot(document.getElementById('root')!).render(
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="scan" element={<ScanVerify />} />
           <Route path="issue" element={<IssueIncentiveCard />} />
-          <Route path="pending-redemptions" element={<PendingRedemptions />} />
           <Route path="view-data" element={<ViewData />} />
           <Route path="package" element={<SuperAdminRoute><CreatePackage /></SuperAdminRoute>} />
           <Route path="manage-admins" element={<SuperAdminRoute><ManageAdmins /></SuperAdminRoute>} />

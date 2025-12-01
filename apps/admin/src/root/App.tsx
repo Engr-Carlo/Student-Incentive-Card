@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, QrCode, CreditCard, Package, Users, LogOut, Database, Menu, X, Clock } from 'lucide-react'
+import { LayoutDashboard, QrCode, CreditCard, Package, Users, LogOut, Database, Menu, X } from 'lucide-react'
 import { adminStore } from '../lib/api'
 import { useState, useEffect, useRef } from 'react'
 
@@ -86,7 +86,6 @@ export default function App(){
           {navLink('/admin/dashboard','Dashboard', <LayoutDashboard size={20} />)}
           {navLink('/admin/scan','Scan & Verify', <QrCode size={20} />)}
           {navLink('/admin/issue','Issue Card', <CreditCard size={20} />)}
-          {navLink('/admin/pending-redemptions','Pending Redemptions', <Clock size={20} />)}
           {navLink('/admin/view-data','View Data', <Database size={20} />)}
           
           {isSuperAdmin && (

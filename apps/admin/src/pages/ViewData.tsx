@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { adminStore, Card, Package, Admin } from '../lib/api'
-import { Trash2, Edit2, Check, X, Filter, Search } from 'lucide-react'
+import { Trash2, Edit2, Check, X, Filter, Search, Clock, User, Gift, Award, Calendar, CheckCircle } from 'lucide-react'
 
 interface Student {
   id: number
@@ -37,17 +37,36 @@ interface EditingPackage {
   benefits: string[]
 }
 
+interface Redemption {
+  id: number
+  card_id: number
+  student_id: string
+  student_name: string
+  benefit: string
+  package_name: string
+  tier: 'Bronze' | 'Silver' | 'Gold'
+  redeemed_date: string
+  redeemed_by: number
+  redeemed_by_name: string
+  grade_added: boolean
+  grade_added_date?: string
+  grade_added_by?: number
+  grade_added_by_name?: string
+}
+
 // Build API base URL (matches logic in api.ts)
 let raw = import.meta.env.VITE_API_URL || 'https://incentive-card-backend.vercel.app'
 if (!/^https?:\/\//.test(raw)) raw = `https://${raw}`
 const API_URL = raw.replace(/\/$/, '')
 
 export function ViewData() {
-  const [activeTab, setActiveTab] = useState<'students' | 'cards' | 'packages' | 'admins'>('students')
+  const [activeTab, setActiveTab] = useState<'students' | 'cards' | 'packages' | 'admins' | 'redemptions'>('students')
   const [students, setStudents] = useState<Student[]>([])
   const [cards, setCards] = useState<CardWithDetails[]>([])
   const [packages, setPackages] = useState<Package[]>([])
   const [admins, setAdmins] = useState<Admin[]>([])
+  const [redemptions, setRedemptions] = useState<Redemption[]>([])
+  const [selectedRedemptions, setSelectedRedemptions] = useState<number[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const isSuperAdmin = adminStore.isSuperAdmin()
@@ -89,6 +108,9 @@ export function ViewData() {
         case 'admins':
           await loadAdmins()
           break
+        case 'redemptions':
+          await loadRedemptions()
+          break
       }
     } catch (err: any) {
       setError(err.message || 'Failed to load data')
@@ -127,6 +149,83 @@ export function ViewData() {
   const loadAdmins = async () => {
     const data = await adminStore.getAllAdmins()
     setAdmins(data)
+  }
+
+  const loadRedemptions = async () => {
+    const response = await fetch(`${API_URL}/api/admin/redemptions`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+      }
+    })
+    if (!response.ok) throw new Error('Failed to fetch redemptions')
+    const data = await response.json()
+    setRedemptions(data)
+  }
+
+  const handleMarkGraded = async (id: number) => {
+    try {
+      const response = await fetch(`${API_URL}/api/admin/redemptions/${id}/mark-graded`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      if (!response.ok) throw new Error('Failed to mark as graded')
+      await loadRedemptions()
+      setSelectedRedemptions(selectedRedemptions.filter(sid => sid !== id))
+    } catch (err: any) {
+      setError(err.message || 'Failed to update redemption')
+    }
+  }
+
+  const handleBulkMarkGraded = async () => {
+    if (selectedRedemptions.length === 0) {
+      setError('Please select at least one redemption')
+      return
+    }
+
+    try {
+      const response = await fetch(`${API_URL}/api/admin/redemptions/bulk-mark-graded`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids: selectedRedemptions })
+      })
+      if (!response.ok) throw new Error('Failed to mark as graded')
+      await loadRedemptions()
+      setSelectedRedemptions([])
+    } catch (err: any) {
+      setError(err.message || 'Failed to update redemptions')
+    }
+  }
+
+  const toggleRedemptionSelection = (id: number) => {
+    if (selectedRedemptions.includes(id)) {
+      setSelectedRedemptions(selectedRedemptions.filter(sid => sid !== id))
+    } else {
+      setSelectedRedemptions([...selectedRedemptions, id])
+    }
+  }
+
+  const toggleSelectAllRedemptions = () => {
+    const pendingRedemptions = redemptions.filter(r => !r.grade_added)
+    if (selectedRedemptions.length === pendingRedemptions.length) {
+      setSelectedRedemptions([])
+    } else {
+      setSelectedRedemptions(pendingRedemptions.map(r => r.id))
+    }
+  }
+
+  const getTierColor = (tier: string) => {
+    switch (tier) {
+      case 'Gold': return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-white'
+      case 'Silver': return 'bg-gradient-to-r from-gray-300 to-gray-500 text-white'
+      case 'Bronze': return 'bg-gradient-to-r from-orange-400 to-orange-600 text-white'
+      default: return 'bg-gray-200 text-gray-800'
+    }
   }
 
   const handleDeleteStudent = async (studentId: number) => {
@@ -374,7 +473,8 @@ export function ViewData() {
     { id: 'students' as const, label: 'Students', icon: '👥' },
     { id: 'cards' as const, label: 'Distributed Cards', icon: '🎴' },
     { id: 'packages' as const, label: 'Packages', icon: '📦' },
-    { id: 'admins' as const, label: 'Administrators', icon: '👤' }
+    { id: 'admins' as const, label: 'Administrators', icon: '👤' },
+    { id: 'redemptions' as const, label: 'Pending Redemptions', icon: '⏳' }
   ]
 
   return (
@@ -1037,6 +1137,158 @@ export function ViewData() {
               {getFilteredAdmins().length === 0 && (
                 <div className="text-center py-12 text-gray-500">No admins match the filters</div>
               )}
+            </div>
+          )}
+
+          {/* Redemptions Table */}
+          {activeTab === 'redemptions' && (
+            <div>
+              {/* Bulk Actions Bar */}
+              {redemptions.filter(r => !r.grade_added).length > 0 && (
+                <div className="bg-blue-50 border-b border-blue-200 p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={selectedRedemptions.length === redemptions.filter(r => !r.grade_added).length && redemptions.filter(r => !r.grade_added).length > 0}
+                        onChange={toggleSelectAllRedemptions}
+                        className="w-5 h-5 rounded border-gray-300"
+                      />
+                      <span className="font-semibold text-gray-700">Select All Pending</span>
+                    </label>
+                    {selectedRedemptions.length > 0 && (
+                      <span className="text-sm text-gray-600">
+                        {selectedRedemptions.length} selected
+                      </span>
+                    )}
+                  </div>
+                  {selectedRedemptions.length > 0 && (
+                    <button
+                      onClick={handleBulkMarkGraded}
+                      className="bg-green-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-700 transition-all flex items-center gap-2"
+                    >
+                      <CheckCircle size={18} />
+                      Mark Selected as Graded
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="overflow-auto" style={{maxHeight: '600px'}}>
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                      <th className="px-6 py-3 text-left bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={selectedRedemptions.length === redemptions.filter(r => !r.grade_added).length && redemptions.filter(r => !r.grade_added).length > 0}
+                          onChange={toggleSelectAllRedemptions}
+                          className="w-5 h-5 rounded border-gray-300"
+                        />
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Student</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Package</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Benefit</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Redeemed</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {redemptions.map((redemption) => (
+                      <tr 
+                        key={redemption.id} 
+                        className={`hover:bg-gray-50 transition-colors ${
+                          redemption.grade_added ? 'opacity-60' : ''
+                        }`}
+                      >
+                        <td className="px-6 py-4">
+                          {!redemption.grade_added && (
+                            <input
+                              type="checkbox"
+                              checked={selectedRedemptions.includes(redemption.id)}
+                              onChange={() => toggleRedemptionSelection(redemption.id)}
+                              className="w-5 h-5 rounded border-gray-300"
+                            />
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <User size={18} className="text-gray-400" />
+                            <div>
+                              <div className="font-semibold text-gray-800">{redemption.student_name}</div>
+                              <div className="text-sm text-gray-500">{redemption.student_id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className={`px-3 py-1 rounded-full text-xs font-bold ${getTierColor(redemption.tier)}`}>
+                              {redemption.tier}
+                            </div>
+                            <span className="font-medium text-gray-700">{redemption.package_name}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Gift size={16} className="text-indigo-500" />
+                            <span className="font-medium text-gray-800">{redemption.benefit}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm">
+                            <div className="flex items-center gap-2 text-gray-700">
+                              <Calendar size={14} />
+                              {formatDate(redemption.redeemed_date)}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">
+                              by {redemption.redeemed_by_name}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          {redemption.grade_added ? (
+                            <div className="flex flex-col gap-1">
+                              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
+                                <CheckCircle size={14} />
+                                Graded
+                              </span>
+                              {redemption.grade_added_date && (
+                                <div className="text-xs text-gray-500">
+                                  {formatDate(redemption.grade_added_date)}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold flex items-center gap-1 w-fit">
+                              <Clock size={14} />
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          {!redemption.grade_added && (
+                            <button
+                              onClick={() => handleMarkGraded(redemption.id)}
+                              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-all flex items-center gap-2"
+                            >
+                              <CheckCircle size={16} />
+                              Mark as Graded
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {redemptions.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <Clock size={80} className="mx-auto text-gray-300 mb-6" />
+                    <p className="text-xl font-medium">No redemptions found</p>
+                    <p className="text-sm mt-2">Redemptions will appear here when students redeem benefits</p>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>
