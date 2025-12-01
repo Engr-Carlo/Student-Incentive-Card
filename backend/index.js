@@ -120,6 +120,27 @@ pool.query('SELECT NOW()', async (err, res) => {
         END $$;
       `)
       
+      // Create redemptions table for grade tracking
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS redemptions (
+          id SERIAL PRIMARY KEY,
+          card_id INTEGER REFERENCES cards(id) ON DELETE CASCADE,
+          student_id VARCHAR(50) REFERENCES students(student_id),
+          student_name VARCHAR(255),
+          benefit TEXT NOT NULL,
+          package_name VARCHAR(255),
+          tier VARCHAR(20),
+          redeemed_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          redeemed_by INTEGER REFERENCES admins(id),
+          grade_added BOOLEAN DEFAULT FALSE,
+          grade_added_date TIMESTAMP,
+          grade_added_by INTEGER REFERENCES admins(id)
+        )
+      `)
+      
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_redemptions_grade_added ON redemptions(grade_added)`)
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_redemptions_student ON redemptions(student_id)`)
+      
       // Update existing cards
       await pool.query(`UPDATE cards SET redeemed_benefits = '{}' WHERE redeemed_benefits IS NULL`)
       
@@ -1263,9 +1284,13 @@ app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) 
     console.log('Redeem request - Card ID:', cardId)
     console.log('Selected benefits:', selectedBenefits)
 
-    // Check if card exists
+    // Check if card exists and get full details
     const cardCheck = await pool.query(
-      'SELECT c.*, p.benefits FROM cards c LEFT JOIN packages p ON c.package_id = p.id WHERE c.id = $1',
+      `SELECT c.*, p.benefits, p.name as package_name, p.tier, s.name as student_name
+       FROM cards c 
+       LEFT JOIN packages p ON c.package_id = p.id 
+       LEFT JOIN students s ON c.student_id = s.student_id
+       WHERE c.id = $1`,
       [cardId]
     )
 
@@ -1321,6 +1346,15 @@ app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) 
       [updatedRedeemedBenefits, allBenefitsUsed, cardId]
     )
 
+    // Create redemption records for grade tracking
+    for (const benefit of selectedBenefits) {
+      await pool.query(
+        `INSERT INTO redemptions (card_id, student_id, student_name, benefit, package_name, tier, redeemed_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [cardId, card.student_id, card.student_name, benefit, card.package_name, card.tier, req.admin.id]
+      )
+    }
+
     res.json({ 
       message: `Successfully redeemed ${selectedBenefits.length} benefit(s)`,
       card: result.rows[0],
@@ -1331,6 +1365,94 @@ app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) 
   } catch (error) {
     console.error('Error redeeming card (admin):', error)
     res.status(500).json({ error: 'Failed to redeem card' })
+  }
+})
+
+// ============ REDEMPTION TRACKING ENDPOINTS ============
+
+// Get all redemptions (with optional filter for pending grade additions)
+app.get('/api/admin/redemptions', authenticateAdmin, async (req, res) => {
+  try {
+    const { pending } = req.query
+    
+    let query = `
+      SELECT r.*, 
+             a1.name as redeemed_by_name,
+             a2.name as grade_added_by_name
+      FROM redemptions r
+      LEFT JOIN admins a1 ON r.redeemed_by = a1.id
+      LEFT JOIN admins a2 ON r.grade_added_by = a2.id
+    `
+    
+    if (pending === 'true') {
+      query += ' WHERE r.grade_added = false'
+    }
+    
+    query += ' ORDER BY r.redeemed_date DESC'
+    
+    const result = await pool.query(query)
+    res.json(result.rows)
+  } catch (error) {
+    console.error('Error fetching redemptions:', error)
+    res.status(500).json({ error: 'Failed to fetch redemptions' })
+  }
+})
+
+// Mark redemption as graded
+app.patch('/api/admin/redemptions/:id/mark-graded', authenticateAdmin, async (req, res) => {
+  try {
+    const { id } = req.params
+    
+    const result = await pool.query(
+      `UPDATE redemptions 
+       SET grade_added = true,
+           grade_added_date = CURRENT_TIMESTAMP,
+           grade_added_by = $1
+       WHERE id = $2
+       RETURNING *`,
+      [req.admin.id, id]
+    )
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Redemption not found' })
+    }
+    
+    res.json({ 
+      message: 'Redemption marked as graded',
+      redemption: result.rows[0]
+    })
+  } catch (error) {
+    console.error('Error marking redemption as graded:', error)
+    res.status(500).json({ error: 'Failed to update redemption' })
+  }
+})
+
+// Mark multiple redemptions as graded
+app.patch('/api/admin/redemptions/bulk-mark-graded', authenticateAdmin, async (req, res) => {
+  try {
+    const { ids } = req.body
+    
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'Please provide an array of redemption IDs' })
+    }
+    
+    const result = await pool.query(
+      `UPDATE redemptions 
+       SET grade_added = true,
+           grade_added_date = CURRENT_TIMESTAMP,
+           grade_added_by = $1
+       WHERE id = ANY($2)
+       RETURNING *`,
+      [req.admin.id, ids]
+    )
+    
+    res.json({ 
+      message: `Marked ${result.rows.length} redemption(s) as graded`,
+      redemptions: result.rows
+    })
+  } catch (error) {
+    console.error('Error bulk marking redemptions:', error)
+    res.status(500).json({ error: 'Failed to update redemptions' })
   }
 })
 
