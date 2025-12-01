@@ -85,6 +85,9 @@ export function ViewData() {
   const [yearLevelFilter, setYearLevelFilter] = useState<string>('all')
   const [issuedByFilter, setIssuedByFilter] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
+  
+  // Redemptions filter
+  const [redemptionStatusFilter, setRedemptionStatusFilter] = useState<'pending' | 'graded' | 'all'>('pending')
 
   // Sorting states
   const [sortField, setSortField] = useState<string>('')
@@ -224,11 +227,11 @@ export function ViewData() {
   }
 
   const toggleSelectAllRedemptions = () => {
-    const pendingRedemptions = redemptions.filter(r => !r.grade_added)
-    if (selectedRedemptions.length === pendingRedemptions.length) {
+    const filteredPending = getFilteredRedemptions().filter(r => !r.grade_added)
+    if (selectedRedemptions.length === filteredPending.length && filteredPending.length > 0) {
       setSelectedRedemptions([])
     } else {
-      setSelectedRedemptions(pendingRedemptions.map(r => r.id))
+      setSelectedRedemptions(filteredPending.map(r => r.id))
     }
   }
 
@@ -537,7 +540,16 @@ export function ViewData() {
   }
 
   const getFilteredRedemptions = () => {
-    return sortData(redemptions)
+    const filtered = redemptions.filter(redemption => {
+      if (redemptionStatusFilter === 'pending') {
+        return !redemption.grade_added
+      } else if (redemptionStatusFilter === 'graded') {
+        return redemption.grade_added
+      }
+      // 'all' shows everything
+      return true
+    })
+    return sortData(filtered)
   }
 
   // Get unique values for filters
@@ -1220,12 +1232,49 @@ export function ViewData() {
                         </td>
                       )}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-              {getFilteredAdmins().length === 0 && (
-                <div className="text-center py-12 text-gray-500">No admins match the filters</div>
-              )}
+          {/* Redemptions Table */}
+          {activeTab === 'redemptions' && (
+            <div>
+              {/* Filter Buttons */}
+              <div className="bg-gray-50 border-b border-gray-200 p-4 flex items-center gap-3">
+                <span className="font-semibold text-gray-700">Show:</span>
+                <button
+                  onClick={() => setRedemptionStatusFilter('pending')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    redemptionStatusFilter === 'pending'
+                      ? 'bg-orange-500 text-white shadow-lg'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  <Clock size={16} className="inline mr-2" />
+                  Pending Only ({redemptions.filter(r => !r.grade_added).length})
+                </button>
+                <button
+                  onClick={() => setRedemptionStatusFilter('graded')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    redemptionStatusFilter === 'graded'
+                      ? 'bg-green-500 text-white shadow-lg'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  <CheckCircle size={16} className="inline mr-2" />
+                  Graded Only ({redemptions.filter(r => r.grade_added).length})
+                </button>
+                <button
+                  onClick={() => setRedemptionStatusFilter('all')}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                    redemptionStatusFilter === 'all'
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  All Redemptions ({redemptions.length})
+                </button>
+              </div>
+
+              {/* Bulk Actions Bar */}
+              {redemptionStatusFilter !== 'graded' && redemptions.filter(r => !r.grade_added).length > 0 && (
+                <div className="bg-blue-50 border-b border-blue-200 p-4 flex items-center justify-between">
             </div>
           )}
 
@@ -1268,12 +1317,14 @@ export function ViewData() {
                   <thead className="bg-gray-50 sticky top-0 z-10">
                     <tr>
                       <th className="px-6 py-3 text-left bg-gray-50">
-                        <input
-                          type="checkbox"
-                          checked={selectedRedemptions.length === redemptions.filter(r => !r.grade_added).length && redemptions.filter(r => !r.grade_added).length > 0}
-                          onChange={toggleSelectAllRedemptions}
-                          className="w-5 h-5 rounded border-gray-300"
-                        />
+                        {redemptionStatusFilter !== 'graded' && (
+                          <input
+                            type="checkbox"
+                            checked={selectedRedemptions.length === getFilteredRedemptions().filter(r => !r.grade_added).length && getFilteredRedemptions().filter(r => !r.grade_added).length > 0}
+                            onChange={toggleSelectAllRedemptions}
+                            className="w-5 h-5 rounded border-gray-300"
+                          />
+                        )}
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="student_name" label="Student" /></th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="package_name" label="Package" /></th>
@@ -1370,11 +1421,19 @@ export function ViewData() {
                     ))}
                   </tbody>
                 </table>
-                {redemptions.length === 0 && (
+                {getFilteredRedemptions().length === 0 && (
                   <div className="text-center py-12 text-gray-500">
                     <Clock size={80} className="mx-auto text-gray-300 mb-6" />
-                    <p className="text-xl font-medium">No redemptions found</p>
-                    <p className="text-sm mt-2">Redemptions will appear here when students redeem benefits</p>
+                    <p className="text-xl font-medium">
+                      {redemptionStatusFilter === 'pending' && 'No pending redemptions'}
+                      {redemptionStatusFilter === 'graded' && 'No graded redemptions'}
+                      {redemptionStatusFilter === 'all' && 'No redemptions found'}
+                    </p>
+                    <p className="text-sm mt-2">
+                      {redemptionStatusFilter === 'pending' && 'Pending redemptions will appear here when students redeem benefits'}
+                      {redemptionStatusFilter === 'graded' && 'Graded redemptions will appear here after you mark them as graded'}
+                      {redemptionStatusFilter === 'all' && 'Redemptions will appear here when students redeem benefits'}
+                    </p>
                   </div>
                 )}
               </div>

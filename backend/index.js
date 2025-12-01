@@ -26,12 +26,19 @@ try {
   const emailUser = process.env.EMAIL_USER || ''
   const emailPassword = process.env.EMAIL_PASSWORD || ''
   
+  console.log('📧 Email Configuration Check:')
+  console.log('   EMAIL_USER exists:', !!emailUser)
+  console.log('   EMAIL_USER value:', emailUser ? emailUser.replace(/(.{3}).*(@.*)/, '$1***$2') : 'NOT SET')
+  console.log('   EMAIL_PASSWORD exists:', !!emailPassword)
+  console.log('   EMAIL_PASSWORD length:', emailPassword ? emailPassword.length : 0)
+  
   if (emailUser && emailUser !== 'your-gmail-account@gmail.com' && emailPassword) {
     isEmailConfigured = true
     
     let emailConfig
     
     if (emailUser.includes('@outlook.com') || emailUser.includes('@hotmail.com')) {
+      console.log('   Detected Outlook/Hotmail account')
       emailConfig = {
         host: 'smtp-mail.outlook.com',
         port: 587,
@@ -41,7 +48,17 @@ try {
           pass: emailPassword
         }
       }
+    } else if (emailUser.includes('@gmail.com')) {
+      console.log('   Detected Gmail account')
+      emailConfig = {
+        service: 'gmail',
+        auth: {
+          user: emailUser,
+          pass: emailPassword
+        }
+      }
     } else {
+      console.log('   Using generic SMTP configuration')
       emailConfig = {
         host: 'smtp.gmail.com',
         port: 587,
@@ -57,20 +74,26 @@ try {
     }
     
     transporter = nodemailer.createTransport(emailConfig)
-    console.log('✅ Email transporter created for:', emailUser)
+    console.log('✅ Email transporter created')
   
     // Verify transporter configuration (async, doesn't block)
     transporter.verify().then(() => {
       console.log('✅ Email service verified and ready to send messages')
     }).catch((error) => {
-      console.log('⚠️  Email service verification failed:', error.message)
+      console.log('❌ Email service verification failed:', error.message)
+      console.log('   Common issues:')
+      console.log('   - Gmail: Enable 2-Step Verification and use App Password')
+      console.log('   - Gmail: Visit https://myaccount.google.com/apppasswords')
+      console.log('   - Outlook: Enable "Let apps that use basic auth to access data"')
       console.log('📧 Will attempt to send emails anyway')
     })
   } else {
-    console.log('📧 Email not configured - EMAIL_USER or EMAIL_PASSWORD missing')
+    console.log('❌ Email not configured properly')
+    console.log('   Please set EMAIL_USER and EMAIL_PASSWORD in .env file')
+    console.log('   For Gmail: Use App Password (not regular password)')
   }
 } catch (error) {
-  console.log('⚠️  Could not initialize email service:', error.message)
+  console.log('❌ Could not initialize email service:', error.message)
   isEmailConfigured = false
   transporter = null
 }
@@ -336,10 +359,14 @@ app.post('/api/auth/send-verification', async (req, res) => {
         await transporter.sendMail(mailOptions)
         console.log(`✅ Verification code sent to ${email}`)
       } catch (emailError) {
-        console.error('Email sending failed:', emailError)
-        console.error('Email error message:', emailError.message)
+        console.error('❌ Email sending failed:', emailError)
+        console.error('   Error code:', emailError.code)
+        console.error('   Error message:', emailError.message)
+        if (emailError.code === 'EAUTH') {
+          console.error('   Authentication failed - check EMAIL_USER and EMAIL_PASSWORD')
+        }
         // Still return success since code is stored in memory
-        console.log('Code stored in memory for manual entry:', code)
+        console.log('✅ Code stored in memory for manual entry:', code)
       }
     } else {
       console.log('\n' + '='.repeat(50))
@@ -610,11 +637,14 @@ app.post('/api/students/forgot-password', async (req, res) => {
 
     try {
       await transporter.sendMail(mailOptions)
-      console.log('Email sent successfully')
+      console.log('✅ Password reset email sent successfully')
     } catch (emailError) {
-      console.error('Email sending failed:', emailError)
-      console.error('Email error message:', emailError.message)
-      console.error('Email error code:', emailError.code)
+      console.error('❌ Email sending failed:', emailError)
+      console.error('   Error code:', emailError.code)
+      console.error('   Error message:', emailError.message)
+      if (emailError.code === 'EAUTH') {
+        throw new Error('Email authentication failed. Please contact administrator to check email configuration.')
+      }
       throw new Error(`Email service error: ${emailError.message}`)
     }
 
