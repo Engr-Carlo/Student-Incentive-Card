@@ -300,6 +300,78 @@ app.get('/', (req, res) => {
   })
 })
 
+// Test email endpoint
+app.post('/api/test-email', async (req, res) => {
+  try {
+    const { to } = req.body
+    
+    if (!to) {
+      return res.status(400).json({ error: 'Email address required in request body as "to"' })
+    }
+
+    console.log('\n' + '='.repeat(60))
+    console.log('📧 EMAIL TEST REQUEST')
+    console.log('='.repeat(60))
+    console.log('To:', to)
+    console.log('Email configured:', isEmailConfigured)
+    console.log('Transporter exists:', !!transporter)
+    console.log('EMAIL_USER:', process.env.EMAIL_USER || 'NOT SET')
+    console.log('EMAIL_PASSWORD set:', !!process.env.EMAIL_PASSWORD)
+    console.log('='.repeat(60))
+
+    if (!isEmailConfigured || !transporter) {
+      return res.status(503).json({ 
+        error: 'Email service not configured',
+        details: {
+          emailConfigured: isEmailConfigured,
+          transporterExists: !!transporter,
+          emailUser: process.env.EMAIL_USER ? 'SET' : 'NOT SET',
+          emailPassword: process.env.EMAIL_PASSWORD ? 'SET' : 'NOT SET'
+        }
+      })
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: to,
+      subject: '✅ Test Email from Incentive Card System',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #003f88;">✅ Email Test Successful!</h2>
+          <p>This is a test email from the Student Incentive Card System.</p>
+          <p>If you received this email, it means the email service is configured correctly.</p>
+          <hr>
+          <p style="color: #666; font-size: 12px;">Sent at: ${new Date().toLocaleString()}</p>
+          <p style="color: #666; font-size: 12px;">From: ${process.env.EMAIL_USER}</p>
+        </div>
+      `
+    }
+
+    console.log('Attempting to send test email...')
+    await transporter.sendMail(mailOptions)
+    console.log('✅ Test email sent successfully!')
+    console.log('='.repeat(60) + '\n')
+
+    res.json({ 
+      success: true,
+      message: 'Test email sent successfully',
+      sentTo: to,
+      from: process.env.EMAIL_USER
+    })
+  } catch (error) {
+    console.error('❌ Test email failed:', error)
+    console.error('Error code:', error.code)
+    console.error('Error message:', error.message)
+    console.log('='.repeat(60) + '\n')
+    
+    res.status(500).json({ 
+      error: 'Failed to send test email',
+      details: error.message,
+      code: error.code
+    })
+  }
+})
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -465,7 +537,11 @@ app.post('/api/auth/register', async (req, res) => {
 
     const newStudent = result.rows[0]
 
-    // Send welcome email (async, don't wait)
+    console.log('\n📧 Attempting to send welcome email...')
+    console.log('Email configured:', isEmailConfigured)
+    console.log('Transporter exists:', !!transporter)
+
+    // Send welcome email
     if (isEmailConfigured && transporter) {
       const studentAppUrl = process.env.STUDENT_APP_URL || 'https://incentive-card-student.vercel.app'
       const loginUrl = `${studentAppUrl}/login`
@@ -530,11 +606,18 @@ app.post('/api/auth/register', async (req, res) => {
         `
       }
 
-      transporter.sendMail(mailOptions)
-        .then(() => console.log('✅ Welcome email sent to:', email))
-        .catch(err => console.error('❌ Failed to send welcome email:', err.message))
+      try {
+        console.log('Sending welcome email to:', email)
+        await transporter.sendMail(mailOptions)
+        console.log('✅ Welcome email sent successfully to:', email)
+      } catch (emailError) {
+        console.error('❌ Failed to send welcome email:', emailError)
+        console.error('   Error code:', emailError.code)
+        console.error('   Error message:', emailError.message)
+        // Don't fail registration if email fails
+      }
     } else {
-      console.log('⚠️  Email not configured, skipping welcome email')
+      console.log('⚠️  Email not configured (isEmailConfigured:', isEmailConfigured, ', transporter:', !!transporter, ')')
     }
 
     res.status(201).json({ 
@@ -601,7 +684,14 @@ app.post('/api/auth/login', async (req, res) => {
 // Student forgot password
 app.post('/api/students/forgot-password', async (req, res) => {
   try {
-    console.log('Forgot password request received for email:', req.body.email)
+    console.log('\n' + '='.repeat(60))
+    console.log('🔐 FORGOT PASSWORD REQUEST')
+    console.log('='.repeat(60))
+    console.log('Email:', req.body.email)
+    console.log('Email configured:', isEmailConfigured)
+    console.log('Transporter exists:', !!transporter)
+    console.log('='.repeat(60))
+    
     const { email } = req.body
 
     if (!email) {
