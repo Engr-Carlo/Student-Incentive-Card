@@ -18,6 +18,9 @@ export interface Card {
   benefits: string[]
   event_type: string
   competition_level: string
+  // Benefit tracking
+  redeemed_benefits?: string[]
+  all_benefits_used?: boolean
 }
 
 export interface RedemptionRequest {

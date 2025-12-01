@@ -300,13 +300,37 @@ export default function MyCards(){
                   Benefits Included
                 </h5>
                 <ul className="space-y-3">
-                  {selectedCard.benefits.map((b, i) => (
-                    <li key={i} className="flex items-start gap-3">
-                      <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
-                      <span className="text-gray-700 font-medium">{b}</span>
-                    </li>
-                  ))}
+                  {selectedCard.benefits.map((b, i) => {
+                    const isRedeemed = selectedCard.redeemed_benefits && selectedCard.redeemed_benefits.includes(b)
+                    return (
+                      <li key={i} className={`flex items-start gap-3 ${isRedeemed ? 'opacity-60' : ''}`}>
+                        {isRedeemed ? (
+                          <>
+                            <XCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-500 font-medium line-through">{b}</span>
+                            <span className="ml-auto text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-semibold">Used</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle size={20} className="text-green-500 flex-shrink-0 mt-0.5" />
+                            <span className="text-gray-700 font-medium">{b}</span>
+                            <span className="ml-auto text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">Available</span>
+                          </>
+                        )}
+                      </li>
+                    )
+                  })}
                 </ul>
+                
+                {selectedCard.redeemed_benefits && selectedCard.redeemed_benefits.length > 0 && (
+                  <div className="mt-4 pt-4 border-t border-indigo-200">
+                    <p className="text-sm text-gray-600">
+                      <span className="font-semibold text-indigo-700">
+                        {selectedCard.benefits.length - selectedCard.redeemed_benefits.length}
+                      </span> of <span className="font-semibold">{selectedCard.benefits.length}</span> benefits remaining
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Dates */}

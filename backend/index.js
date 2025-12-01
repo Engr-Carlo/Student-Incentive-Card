@@ -1158,7 +1158,15 @@ app.get('/api/cards', async (req, res) => {
     `
 
     const result = await pool.query(query, [student_id])
-    res.json(result.rows)
+    
+    // Parse benefits and redeemed_benefits arrays for each card
+    const cards = result.rows.map(card => ({
+      ...card,
+      benefits: Array.isArray(card.benefits) ? card.benefits : (card.benefits ? card.benefits.split(',').map(b => b.trim()) : []),
+      redeemed_benefits: card.redeemed_benefits || []
+    }))
+    
+    res.json(cards)
   } catch (error) {
     console.error('Error fetching cards:', error)
     res.status(500).json({ error: 'Failed to fetch cards' })
