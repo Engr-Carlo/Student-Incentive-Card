@@ -1232,6 +1232,12 @@ export function ViewData() {
                         </td>
                       )}
                     </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
           {/* Redemptions Table */}
           {activeTab === 'redemptions' && (
             <div>
@@ -1273,16 +1279,7 @@ export function ViewData() {
               </div>
 
               {/* Bulk Actions Bar */}
-              {redemptionStatusFilter !== 'graded' && redemptions.filter(r => !r.grade_added).length > 0 && (
-                <div className="bg-blue-50 border-b border-blue-200 p-4 flex items-center justify-between">
-            </div>
-          )}
-
-          {/* Redemptions Table */}
-          {activeTab === 'redemptions' && (
-            <div>
-              {/* Bulk Actions Bar */}
-              {redemptions.filter(r => !r.grade_added).length > 0 && (
+              {redemptionStatusFilter !== 'graded' && getFilteredRedemptions().filter(r => !r.grade_added).length > 0 && (
                 <div className="bg-blue-50 border-b border-blue-200 p-4 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
@@ -1444,3 +1441,5 @@ export function ViewData() {
     </div>
   )
 }
+
+export default ViewData
