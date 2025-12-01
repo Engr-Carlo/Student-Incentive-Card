@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { adminStore, Card, Package, Admin } from '../lib/api'
-import { Trash2, Edit2, Check, X, Filter, Search, Clock, User, Gift, Award, Calendar, CheckCircle } from 'lucide-react'
+import { Trash2, Edit2, Check, X, Filter, Search, Clock, User, Gift, Award, Calendar, CheckCircle, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 
 interface Student {
   id: number
@@ -86,6 +86,10 @@ export function ViewData() {
   const [issuedByFilter, setIssuedByFilter] = useState<string>('all')
   const [showFilters, setShowFilters] = useState(false)
 
+  // Sorting states
+  const [sortField, setSortField] = useState<string>('')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
   useEffect(() => {
     loadData()
   }, [activeTab])
@@ -152,14 +156,23 @@ export function ViewData() {
   }
 
   const loadRedemptions = async () => {
-    const response = await fetch(`${API_URL}/api/admin/redemptions`, {
-      headers: {
-        'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+    try {
+      const response = await fetch(`${API_URL}/api/admin/redemptions`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`
+        }
+      })
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || 'Failed to fetch redemptions')
       }
-    })
-    if (!response.ok) throw new Error('Failed to fetch redemptions')
-    const data = await response.json()
-    setRedemptions(data)
+      const data = await response.json()
+      setRedemptions(data)
+    } catch (err: any) {
+      console.error('Error loading redemptions:', err)
+      setError(err.message || 'Failed to fetch redemptions')
+      setRedemptions([])
+    }
   }
 
   const handleMarkGraded = async (id: number) => {
@@ -395,9 +408,77 @@ export function ViewData() {
     })
   }
 
+  // Sorting function
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection('asc')
+    }
+  }
+
+  const sortData = <T extends Record<string, any>>(data: T[]): T[] => {
+    if (!sortField) return data
+
+    return [...data].sort((a, b) => {
+      let aVal = a[sortField]
+      let bVal = b[sortField]
+
+      // Handle nested properties (e.g., "first_name last_name")
+      if (sortField === 'name' && a.first_name && a.last_name) {
+        aVal = `${a.first_name} ${a.last_name}`
+        bVal = `${b.first_name} ${b.last_name}`
+      }
+
+      // Handle null/undefined
+      if (aVal == null) return 1
+      if (bVal == null) return -1
+
+      // Handle dates
+      if (sortField.includes('date') || sortField.includes('Date')) {
+        aVal = new Date(aVal).getTime()
+        bVal = new Date(bVal).getTime()
+      }
+
+      // Handle numbers
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return sortDirection === 'asc' ? aVal - bVal : bVal - aVal
+      }
+
+      // Handle strings
+      const aStr = String(aVal).toLowerCase()
+      const bStr = String(bVal).toLowerCase()
+      
+      if (sortDirection === 'asc') {
+        return aStr < bStr ? -1 : aStr > bStr ? 1 : 0
+      } else {
+        return aStr > bStr ? -1 : aStr < bStr ? 1 : 0
+      }
+    })
+  }
+
+  const SortButton = ({ field, label }: { field: string; label: string }) => (
+    <button
+      onClick={() => handleSort(field)}
+      className="flex items-center gap-1 hover:text-gray-700 transition-colors group"
+    >
+      <span>{label}</span>
+      {sortField === field ? (
+        sortDirection === 'asc' ? (
+          <ArrowUp size={14} className="text-indigo-600" />
+        ) : (
+          <ArrowDown size={14} className="text-indigo-600" />
+        )
+      ) : (
+        <ArrowUpDown size={14} className="opacity-0 group-hover:opacity-50 transition-opacity" />
+      )}
+    </button>
+  )
+
   // Filter functions
   const getFilteredStudents = () => {
-    return students.filter(student => {
+    const filtered = students.filter(student => {
       const matchesSearch = searchTerm === '' || 
         student.student_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         `${student.first_name} ${student.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -408,10 +489,11 @@ export function ViewData() {
       
       return matchesSearch && matchesProgram && matchesYear
     })
+    return sortData(filtered)
   }
 
   const getFilteredCards = () => {
-    return cards.filter(card => {
+    const filtered = cards.filter(card => {
       const matchesSearch = searchTerm === '' || 
         card.student_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
         card.package_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -426,10 +508,11 @@ export function ViewData() {
       
       return matchesSearch && matchesTier && matchesStatus && matchesEventType && matchesIssuedBy && matchesDateFrom && matchesDateTo
     })
+    return sortData(filtered)
   }
 
   const getFilteredPackages = () => {
-    return packages.filter(pkg => {
+    const filtered = packages.filter(pkg => {
       const matchesSearch = searchTerm === '' || 
         pkg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         pkg.event_type.toLowerCase().includes(searchTerm.toLowerCase())
@@ -439,16 +522,22 @@ export function ViewData() {
       
       return matchesSearch && matchesTier && matchesEventType
     })
+    return sortData(filtered)
   }
 
   const getFilteredAdmins = () => {
-    return admins.filter(admin => {
+    const filtered = admins.filter(admin => {
       const matchesSearch = searchTerm === '' || 
         `${admin.first_name} ${admin.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         admin.email.toLowerCase().includes(searchTerm.toLowerCase())
       
       return matchesSearch
     })
+    return sortData(filtered)
+  }
+
+  const getFilteredRedemptions = () => {
+    return sortData(redemptions)
   }
 
   // Get unique values for filters
@@ -695,13 +784,13 @@ export function ViewData() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Student ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Program</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Year Level</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Registered</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="student_id" label="Student ID" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="name" label="Name" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="email" label="Email" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="program" label="Program" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="year_level" label="Year Level" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="is_active" label="Status" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="created_at" label="Registered" /></th>
                     {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
@@ -843,13 +932,13 @@ export function ViewData() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Card ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Student ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Package</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Tier</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Issued Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Issued By</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="id" label="Card ID" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="student_id" label="Student ID" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="package_name" label="Package" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="tier" label="Tier" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="status" label="Status" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="issued_date" label="Issued Date" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="admin_name" label="Issued By" /></th>
                     {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
@@ -904,13 +993,13 @@ export function ViewData() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Package ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Tier</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Event Type</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Level</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="id" label="Package ID" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="name" label="Name" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="tier" label="Tier" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="event_type" label="Event Type" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="competition_level" label="Level" /></th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Benefits</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Created</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="created_at" label="Created" /></th>
                     {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
@@ -1074,12 +1163,12 @@ export function ViewData() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50 sticky top-0 z-10">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Admin ID</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Role</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Created</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="id" label="Admin ID" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="name" label="Name" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="email" label="Email" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="role" label="Role" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="is_active" label="Status" /></th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="created_at" label="Created" /></th>
                     {isSuperAdmin && <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Actions</th>}
                   </tr>
                 </thead>
@@ -1186,16 +1275,16 @@ export function ViewData() {
                           className="w-5 h-5 rounded border-gray-300"
                         />
                       </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Student</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Package</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Benefit</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Redeemed</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="student_name" label="Student" /></th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="package_name" label="Package" /></th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="benefit" label="Benefit" /></th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="redeemed_date" label="Redeemed" /></th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50"><SortButton field="grade_added" label="Status" /></th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50">Action</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {redemptions.map((redemption) => (
+                    {getFilteredRedemptions().map((redemption) => (
                       <tr 
                         key={redemption.id} 
                         className={`hover:bg-gray-50 transition-colors ${

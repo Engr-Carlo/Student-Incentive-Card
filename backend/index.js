@@ -1286,7 +1286,8 @@ app.post('/api/admin/cards/:cardId/redeem', authenticateAdmin, async (req, res) 
 
     // Check if card exists and get full details
     const cardCheck = await pool.query(
-      `SELECT c.*, p.benefits, p.name as package_name, p.tier, s.name as student_name
+      `SELECT c.*, p.benefits, p.name as package_name, p.tier, 
+              CONCAT(s.first_name, ' ', s.last_name) as student_name
        FROM cards c 
        LEFT JOIN packages p ON c.package_id = p.id 
        LEFT JOIN students s ON c.student_id = s.student_id
@@ -1375,10 +1376,12 @@ app.get('/api/admin/redemptions', authenticateAdmin, async (req, res) => {
   try {
     const { pending } = req.query
     
+    console.log('Fetching redemptions, pending filter:', pending)
+    
     let query = `
       SELECT r.*, 
-             a1.name as redeemed_by_name,
-             a2.name as grade_added_by_name
+             CONCAT(a1.first_name, ' ', a1.last_name) as redeemed_by_name,
+             CONCAT(a2.first_name, ' ', a2.last_name) as grade_added_by_name
       FROM redemptions r
       LEFT JOIN admins a1 ON r.redeemed_by = a1.id
       LEFT JOIN admins a2 ON r.grade_added_by = a2.id
@@ -1391,10 +1394,11 @@ app.get('/api/admin/redemptions', authenticateAdmin, async (req, res) => {
     query += ' ORDER BY r.redeemed_date DESC'
     
     const result = await pool.query(query)
+    console.log('Redemptions found:', result.rows.length)
     res.json(result.rows)
   } catch (error) {
     console.error('Error fetching redemptions:', error)
-    res.status(500).json({ error: 'Failed to fetch redemptions' })
+    res.status(500).json({ error: 'Failed to fetch redemptions', details: error.message })
   }
 })
 
