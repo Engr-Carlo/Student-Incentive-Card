@@ -463,9 +463,83 @@ app.post('/api/auth/register', async (req, res) => {
       [student_id, email, password_hash, first_name, last_name, program, year_level]
     )
 
+    const newStudent = result.rows[0]
+
+    // Send welcome email (async, don't wait)
+    if (isEmailConfigured && transporter) {
+      const studentAppUrl = process.env.STUDENT_APP_URL || 'https://incentive-card-student.vercel.app'
+      const loginUrl = `${studentAppUrl}/login`
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: '🎉 Welcome to Student Incentive Card System!',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background-color: #003f88; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { background-color: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+              .button { display: inline-block; background-color: #003f88; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; margin: 20px 0; }
+              .info-box { background-color: white; border: 2px solid #003f88; border-radius: 8px; padding: 20px; margin: 20px 0; }
+              .footer { text-align: center; margin-top: 20px; color: #666; font-size: 12px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎉 Welcome to Student Incentive Card System!</h1>
+              </div>
+              <div class="content">
+                <p>Hello ${first_name} ${last_name},</p>
+                <p>Congratulations! Your account has been successfully created.</p>
+                
+                <div class="info-box">
+                  <p><strong>📋 Your Account Details:</strong></p>
+                  <ul>
+                    <li>Student ID: <strong>${student_id}</strong></li>
+                    <li>Email: <strong>${email}</strong></li>
+                    <li>Program: <strong>${program}</strong></li>
+                    <li>Year Level: <strong>${year_level}</strong></li>
+                  </ul>
+                </div>
+
+                <p>You can now log in to view your incentive cards and benefits!</p>
+
+                <p style="text-align: center;">
+                  <a href="${loginUrl}" class="button">Go to Login Page</a>
+                </p>
+
+                <p style="color: #666; font-size: 14px;">If the button doesn't work, copy and paste this link:</p>
+                <p style="background-color: #e9ecef; padding: 10px; border-radius: 5px; word-break: break-all; font-size: 12px;">
+                  ${loginUrl}
+                </p>
+
+                <p>Thank you for being part of our incentive program!</p>
+              </div>
+              <div class="footer">
+                <p>Student Incentive Card System</p>
+                <p>This is an automated email. Please do not reply.</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      }
+
+      transporter.sendMail(mailOptions)
+        .then(() => console.log('✅ Welcome email sent to:', email))
+        .catch(err => console.error('❌ Failed to send welcome email:', err.message))
+    } else {
+      console.log('⚠️  Email not configured, skipping welcome email')
+    }
+
     res.status(201).json({ 
       message: 'Student registered successfully',
-      student: result.rows[0]
+      student: newStudent
     })
   } catch (error) {
     console.error('Registration error:', error)
@@ -552,10 +626,10 @@ app.post('/api/students/forgot-password', async (req, res) => {
     console.log('Transporter exists:', !!transporter)
 
     if (!isEmailConfigured || !transporter) {
-      // Store token anyway so user can manually get it if needed
-      console.log('⚠️  Email not available, but token stored in database')
+      console.log('⚠️  Email service not available')
       return res.status(503).json({ 
-        error: 'Email service is not currently available. Please contact your administrator or try again later.' 
+        error: 'Email service is not currently available. Please contact your administrator.',
+        details: 'The email service is not configured on the server. Please ask an administrator to set up email credentials.'
       })
     }
 
@@ -823,8 +897,12 @@ app.post('/api/admins/forgot-password', async (req, res) => {
 
     const admin = result.rows[0]
 
-    if (!isEmailConfigured) {
-      return res.status(503).json({ error: 'Email service not configured. Please contact administrator.' })
+    if (!isEmailConfigured || !transporter) {
+      console.log('⚠️  Email service not available for admin password recovery')
+      return res.status(503).json({ 
+        error: 'Email service is not currently available. Please contact the super administrator.',
+        details: 'The email service is not configured on the server.'
+      })
     }
 
     // Decrypt password from password_hash (since we're storing plain text passwords)
@@ -889,12 +967,30 @@ app.post('/api/admins/forgot-password', async (req, res) => {
       `
     }
 
-    await transporter.sendMail(mailOptions)
-
-    res.json({ message: 'Password has been sent to your email address' })
+    try {
+      await transporter.sendMail(mailOptions)
+      console.log('✅ Admin password recovery email sent successfully to:', email)
+      res.json({ message: 'Password has been sent to your email address' })
+    } catch (emailError) {
+      console.error('❌ Failed to send admin password recovery email:', emailError)
+      console.error('   Error code:', emailError.code)
+      console.error('   Error message:', emailError.message)
+      
+      if (emailError.code === 'EAUTH') {
+        return res.status(500).json({ 
+          error: 'Email authentication failed. Please contact the super administrator.',
+          details: 'The email service credentials need to be updated.'
+        })
+      }
+      
+      return res.status(500).json({ 
+        error: 'Failed to send password recovery email. Please try again or contact the super administrator.',
+        details: emailError.message
+      })
+    }
   } catch (error) {
     console.error('Admin forgot password error:', error)
-    res.status(500).json({ error: 'Failed to send password recovery email' })
+    res.status(500).json({ error: 'Failed to process password recovery request' })
   }
 })
 
