@@ -685,7 +685,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.post('/api/students/forgot-password', async (req, res) => {
   try {
     console.log('\n' + '='.repeat(60))
-    console.log('🔐 FORGOT PASSWORD REQUEST')
+    console.log('FORGOT PASSWORD REQUEST')
     console.log('='.repeat(60))
     console.log('Email:', req.body.email)
     console.log('Email configured:', isEmailConfigured)

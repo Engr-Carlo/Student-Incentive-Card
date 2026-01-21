@@ -316,10 +316,8 @@ export default function Register(){
               >
                 <option value="">-- Select Program --</option>
                 <option value="BS Computer Engineering">BS Computer Engineering</option>
-                <option value="BS Electrical Engineering">BS Electrical Engineering</option>
                 <option value="BS Electronics Engineering">BS Electronics Engineering</option>
-                <option value="BS Computer Science">BS Computer Science</option>
-                <option value="BS Information Technology">BS Information Technology</option>
+                <option value="BS Industrial Engineering">BS Industrial Engineering</option>
               </select>
             </div>
 
