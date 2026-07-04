@@ -252,15 +252,15 @@ export default function Dashboard() {
               <div key={achievement.id} className="relative animate-slideIn" style={{animationDelay: `${index * 0.1}s`}}>
                 {/* Timeline line */}
                 {index !== achievements.length - 1 && (
-                  <div className="absolute left-5 sm:left-7 top-12 sm:top-16 bottom-0 w-0.5 sm:w-1 bg-gradient-to-b from-indigo-400 via-purple-400 to-transparent rounded-full"></div>
+                  <div className="absolute left-5 sm:left-7 top-12 sm:top-16 bottom-0 w-0.5 sm:w-1 bg-indigo-300 rounded-full"></div>
                 )}
                 
                 <div className="flex gap-3 sm:gap-6 items-start">
                   {/* Timeline dot */}
                   <div className={`flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center shadow-lg sm:shadow-2xl transform transition-all duration-300 active:scale-95 sm:hover:scale-110 ${
-                    achievement.tier === 'Gold' ? 'bg-gradient-to-br from-yellow-400 to-yellow-600 ring-4 ring-yellow-200' :
-                    achievement.tier === 'Silver' ? 'bg-gradient-to-br from-gray-400 to-gray-600 ring-4 ring-gray-200' :
-                    'bg-gradient-to-br from-orange-400 to-orange-600 ring-2 sm:ring-4 ring-orange-200'
+                    achievement.tier === 'Gold' ? 'bg-yellow-500 ring-4 ring-yellow-200' :
+                    achievement.tier === 'Silver' ? 'bg-gray-500 ring-4 ring-gray-200' :
+                    'bg-orange-500 ring-2 sm:ring-4 ring-orange-200'
                   }`}>
                     <Award size={18} className="text-white sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>
@@ -274,14 +274,14 @@ export default function Dashboard() {
                       </div>
                       <div className="flex flex-row sm:flex-col items-start sm:items-end gap-2">
                         <span className={`px-2.5 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded-full text-[10px] sm:text-xs font-bold shadow-md ${
-                          achievement.tier === 'Gold' ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-yellow-900' :
-                          achievement.tier === 'Silver' ? 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-800' :
-                          'bg-gradient-to-r from-orange-400 to-orange-500 text-orange-900'
+                          achievement.tier === 'Gold' ? 'bg-yellow-400 text-yellow-900' :
+                          achievement.tier === 'Silver' ? 'bg-gray-300 text-gray-800' :
+                          'bg-orange-400 text-orange-900'
                         }`}>
                           {achievement.tier}
                         </span>
                         <span className={`px-2.5 sm:px-3 lg:px-4 py-1 sm:py-1.5 lg:py-2 rounded-full text-[10px] sm:text-xs font-bold shadow-md ${
-                          achievement.status === 'Unused' ? 'bg-gradient-to-r from-green-400 to-green-500 text-green-900' : 'bg-gradient-to-r from-blue-400 to-blue-500 text-blue-900'
+                          achievement.status === 'Unused' ? 'bg-green-400 text-green-900' : 'bg-blue-400 text-blue-900'
                         }`}>
                           {achievement.status}
                         </span>
